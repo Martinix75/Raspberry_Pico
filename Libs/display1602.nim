@@ -6,7 +6,7 @@ import picousb
 
 
 const 
-  disp1602Ver* = "0.1.4"
+  disp1602Ver* = "0.2.1"
   lcdClr = 0x01
   lcdHome = 0x02
   lcdEntryMode = 0x04
@@ -153,8 +153,7 @@ proc shiftChar*(self: Lcd, charx: char, speed: uint16 = 400, dir = true) =
       self.moveTo(curx = self.cursorX, cury = self.cursorY)
 
 proc lcdCleraLine(self: Lcd) =
-  let ncol: uint8 = self.numColum #valuta..
-  for _ in 0..16:
+  for _ in uint8(0)..self.numColum:
     self.moveTo(curx = 0, cury = self.cursorY)
     self.lcdWriteData(uint8(ord(' ')))
     self.cursorX = self.cursorX + 1
@@ -162,37 +161,30 @@ proc lcdCleraLine(self: Lcd) =
     
 
 proc shiftString*(self: Lcd, strg: string, speed: uint16 = 400, dir = true) =
-  var seqChr:seq[char]
+  #var seqChr:seq[char]
   var fstring: string
   if dir == true:
-    for charx in 0..len(strg):
+    for charx in 0..len(strg)-1:
       fstring.add(strg[charx])
-      seqChr = toSeq(fstring)
-      let lennseq = uint8(len(fstring))
-      if lennseq >= self.numColum:
-        seqChr.delete(0)
-      print("seqChrL: " & $seqChr & '\n')
-      self.lcdShiftLeft(seqChr, speed)
+      var pippo = self.lcdFormatStr(fstring)
+      self.lcdShiftLeft(pippo, speed)
   else:
-    #var revStr: string
     for charx in 1..len(strg):
       fstring.add(strg[^charx])
-      seqChr = toSeq(fstring)
-      #print("revStr: " & revStr & '\n')
-      let lenseq = uint8(len(fstring))
-      if lenseq >= self.numColum:
-        seqChr.delete(0)
-      print("seqChrR: " & $seqChr & '\n')
-      self.lcdShiftRight(seqChr, speed)
+      var pippo = self.lcdFormatStr(fstring)
+      self.lcdShiftRight(pippo, speed)
 
 proc lcdFormatStr(self: Lcd, strg: string): seq[char] =
-  discard
+  result = toSeq(strg)
+  let lennseq = uint8(len(result))
+  if lennseq >= self.numColum:
+    result.delete(0)
 
 proc lcdShiftRight(self: Lcd, seqx: seq[char], speed: uint16) =
   self.lcdCleraLine()
   self.cursorX = uint8(len(seqx) - 1)
   self.moveTo(self.cursorX, self.cursorY)
-  print("sposto..." & '\n')
+  #print("sposto..." & '\n')
   for charx in seqx:
     self.lcdWriteData(uint8(ord(charx)))
     self.cursorX = self.cursorX - 1
@@ -317,29 +309,25 @@ when isMainModule:
   #print("---init----" & '\n')
   lcdx.init()
   #print("---disp init----" & '\n')
+  sleep(2000)
 
   while true:
-    if usb.isReady == true:
-        lcdx.clear()
-        #print("---init----" & '\n')
-        #lcdx.lcdInit()
-        #print("---disp init----" & '\n')
-        #print("---stampa X----" & '\n')
-        #lcdx.lcdPutChar('A')
-        lcdx.moveTo(0,0)
-        #lcdx.putStr("linea2")
-        #lcdx.shiftChar('A',1000, true)
-        #lcdx.centerString("Center!")
-        #lcdx.moveTo(0,1)
-        lcdx.shiftString("Right Shift >", dir = false)
-        lcdx.moveTo(0,1)
-        lcdx.shiftString("< Left Shift", dir = true)
-        #print("---clear-----" & '\n')
-        #[sleep(3000)
-        lcdx.clear()
-        lcdx.moveTo(0,0)
-        lcdx.putStr("Normal Writing")
-        lcdx.moveTo(0,1)
-        lcdx.shiftChar('>')
-        lcdx.shiftChar('<', 200, false)]#
-        sleep(1000)
+    #if usb.isReady == true:
+    lcdx.clear()
+    lcdx.putStr("Lcd Version:")
+    lcdx.moveTo(0,1)
+    lcdx.centerString(disp1602Ver)
+    sleep(5000)
+    lcdx.clear()
+    lcdx.shiftString("Right Shift >", dir = false)
+    lcdx.moveTo(0,1)
+    lcdx.shiftString("< Left Shift", dir = true)
+    sleep(2000)
+    lcdx.clear()
+    lcdx.putStr("String > 16 Chars!!")
+    sleep(3000)
+    lcdx.clear()
+    lcdx.shiftChar('>')
+    lcdx.moveTo(0,1)
+    lcdx.shiftChar('<', 200, false)
+    sleep(2000)
