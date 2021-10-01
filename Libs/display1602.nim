@@ -6,7 +6,7 @@ import picousb
 
 
 const 
-  disp1602Ver* = "0.2.1"
+  disp1602Ver* = "0.2.3"
   lcdClr = 0x01
   lcdHome = 0x02
   lcdEntryMode = 0x04
@@ -57,6 +57,7 @@ proc lcdFormatStr(self: Lcd, strg: string): seq[char]
 proc moveTo*(self: Lcd, curx, cury: uint8)
 proc putChar*(self: Lcd, charx: char)
 proc shiftChar*(self: Lcd, charx: char, speed: uint16 = 400, dir = true)
+proc shiftString*(self: Lcd, strg: string, speed: uint16 = 400, dir = true)
 
 proc lcdSendByte(self: Lcd, valore: uint8) =
   let addVal = valore.unsafeAddr
@@ -152,13 +153,14 @@ proc shiftChar*(self: Lcd, charx: char, speed: uint16 = 400, dir = true) =
       self.cursorX = self.cursorX - 1
       self.moveTo(curx = self.cursorX, cury = self.cursorY)
 
-proc lcdCleraLine(self: Lcd) =
-  for _ in uint8(0)..self.numColum:
-    self.moveTo(curx = 0, cury = self.cursorY)
-    self.lcdWriteData(uint8(ord(' ')))
-    self.cursorX = self.cursorX + 1
-    self.moveTo(curx = self.cursorX, cury = self.cursorY)
-    
+proc putStr*(self: Lcd, strg: string) =
+  let lenstrg = uint8(len(strg))
+  if lenstrg <= self.numColum:# da mettere <= ;intest >
+    for charx in strg:
+      self.putChar(charx)
+      #sleep(5)
+  else:
+    self.shiftString(strg)
 
 proc shiftString*(self: Lcd, strg: string, speed: uint16 = 400, dir = true) =
   #var seqChr:seq[char]
@@ -175,58 +177,44 @@ proc shiftString*(self: Lcd, strg: string, speed: uint16 = 400, dir = true) =
       self.lcdShiftRight(pippo, speed)
 
 proc lcdFormatStr(self: Lcd, strg: string): seq[char] =
-  result = toSeq(strg)
-  let lennseq = uint8(len(result))
-  if lennseq >= self.numColum:
-    result.delete(0)
+  var fstring = toSeq(strg)
+  var lenseq = uint8(len(fstring))
+  if lenseq > self.numColum:
+    while lenseq > self.numColum:
+      fstring.delete(0)
+      lenseq = uint8(len(fstring))
+  #print("formS: " & $fstring & '\n') 
+  return fstring
 
 proc lcdShiftRight(self: Lcd, seqx: seq[char], speed: uint16) =
+  let lenseqx = uint8(len(seqx)) #test
   self.lcdCleraLine()
-  self.cursorX = uint8(len(seqx) - 1)
+  self.cursorX = lenseqx - 1 
   self.moveTo(self.cursorX, self.cursorY)
   #print("sposto..." & '\n')
   for charx in seqx:
     self.lcdWriteData(uint8(ord(charx)))
     self.cursorX = self.cursorX - 1
-    self.moveTo(curx = self.cursorX, cury = self.cursorY)
+    self.moveTo(self.cursorX, self.cursorY)
   sleep(speed)
 
 proc lcdShiftLeft(self: Lcd, seqx: seq[char], speed: uint16) =
+  let lenseqx = uint8(len(seqx)) #test
   self.lcdCleraLine()
-  self.cursorX = self.numColum - uint8(len(seqx) + 1)
+  self.cursorX = self.numColum  - lenseqx
   self.moveTo(self.cursorX, self.cursorY)
   for charx in seqx:
     self.lcdWriteData(uint8(ord(charx)))
     self.cursorX = self.cursorX + 1
-    self.moveTo(curx = self.cursorX, cury = self.cursorY)
+    self.moveTo(self.cursorX, self.cursorY)
   sleep(speed)
 
-
-    #[for _ in 0..16:#len(tt):
-      self.cursorX =  0
-      self.moveTo(curx = self.cursorX, cury = self.cursorY)
-      self.lcdWriteData(uint8(ord(' ')))
-      self.cursorX = self.cursorX + 1
-      self.moveTo(curx = self.cursorX, cury = self.cursorY)
-    self.cursorX  = uint8(len(tt))-1
+proc lcdCleraLine(self: Lcd) =
+  for _ in uint8(0)..self.numColum:
+    self.moveTo(curx = 0, cury = self.cursorY)
+    self.lcdWriteData(uint8(ord(' ')))
+    self.cursorX = self.cursorX + 1
     self.moveTo(curx = self.cursorX, cury = self.cursorY)
-    #sleep(300)
-    #self.cursorX = uint8(len(tt)-1)
-    for y in tt:
-      #self.cursorX = uint8(len(tt))
-      self.lcdWriteData(uint8(ord(y)))
-      self.cursorX = self.cursorX - 1
-      self.moveTo(curx = self.cursorX, cury = self.cursorY)
-    sleep(speed)]#
-
-proc putStr*(self: Lcd, strg: string) =
-  let lenstrg = uint8(len(strg))
-  if lenstrg <= self.numColum:# da mettere <= ;intest >
-    for charx in strg:
-      self.putChar(charx)
-      #sleep(5)
-  else:
-    self.shiftString(strg)
 
 proc centerString*(self: Lcd, charx: string) =
   let numColum = uint8(self.numColum div 2)
@@ -319,9 +307,10 @@ when isMainModule:
     lcdx.centerString(disp1602Ver)
     sleep(5000)
     lcdx.clear()
-    lcdx.shiftString("Right Shift >", dir = false)
     lcdx.moveTo(0,1)
-    lcdx.shiftString("< Left Shift", dir = true)
+    lcdx.shiftString("Right Shift 123456789 >", dir = false)
+    lcdx.moveTo(0,0)
+    lcdx.shiftString("< 123456789 Left Shift", dir = true)
     sleep(2000)
     lcdx.clear()
     lcdx.putStr("String > 16 Chars!!")
