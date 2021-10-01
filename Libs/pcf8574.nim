@@ -2,9 +2,9 @@ import picostdlib/[gpio, i2c]
 import picostdlib
 
 const 
-  pcf8574Ver = "0.1.0"
-  on = true #da valutare se low o altro
-  off = false #da valutare se high o altro..
+  pcf8574Ver* = "0.2.1"
+  on = true
+  off = false
   p0: uint8 = 0b00000001 #create a bit mask 
   p1: uint8 = 0b00000010
   p2: uint8 = 0b00000100
@@ -18,69 +18,84 @@ type
   Pcf8574* = ref object #creates the pcf8574 object
     addressDevice: uint8
     blockk: I2cInst
-    buffer: uint8 
+    buffer: uint8
 
-proc byteWrite*(self: Pcf8574, dato:uint8 ) = #proc to write the byte 
+proc writeBytex*(self: Pcf8574, dato: uint8 ) = #proc to write the byte 
   let dato = dato.unsafeAddr #get the address of the data
   writeBlocking(self.blockk, self.addressDevice, dato, 1, true) #write the data on the i2c bus 
 
-proc byteRead*(self:Pcf8574, dato: var array[1,uint8]) =
+proc readBytex*(self: Pcf8574, dato: var array[1,uint8]) =
   let datox = dato[0].unsafeAddr
   discard readBlocking(self.blockk, self.addressDevice, datox, 1, false)
 
-proc digitWrite*(self:Pcf8574,pin:uint8, value:bool) =
+proc digitWrite*(self: Pcf8574, pin: uint8, value: bool) =
   if value == on:
     self.buffer = (self.buffer or pin) #go to act (turn on) the selected bit 
-    byteWrite(self,self.buffer)
+    self.writeBytex(self.buffer)
   elif value == off:
     self.buffer = (self.buffer and pin) #go to act (turn off) the selected bit 
-    byteWrite(self,self.buffer)
+    self.writeBytex(self.buffer)
 
-proc digitRead*(self:Pcf8574, pin:uint8): bool =
-  var buffRead = [uint8(0)]
-  byteRead(self, buffRead)
-  let valuePins = buffRead[0]
-  let mask = not valuePins
+proc digitRead*(self: Pcf8574, pin: uint8): bool =
+  var buff = [uint8(0)]
+  readBytex(self, buff)
+  let valuePins = buff[0]
+  let mask = (valuePins xor 0b11111111)
   let valuePin = (mask and pin)
-  #print("valore Pin: " & $valuePin)
+  print("valore Pin: " & $valuePin)
   if pin == valuePin:
     result = on
   else:
     result =  off
 
+proc setLow*(self: Pcf8574) = #set buffer 0x00
+  self.writeBytex(0x00)
+
+proc setHigh*(self: Pcf8574) = #set buffer 0xff
+  self.writeBytex(0xff)
+
 when isMainModule:
   stdioInitAll()
-  let expander = Pcf8574(addressDevice: 0x20, blockk: i2c0) #buffer: 0b00000000  initializes the object 
-  setupGpio(led1, 25.Gpio,Out)
-  const sda = 0.Gpio 
-  const scl = 1.Gpio 
+  let exp1 = Pcf8574(addressDevice: 0x20, blockk: i2c1, buffer: 0x00)# initializes the object if if necessary
+
+  const sda = 2.Gpio 
+  const scl = 3.Gpio 
   const address = 0x20
-  init(i2c0,10000)
+  init(i2c1,10000)
   sda.setFunction(I2C); sda.pullUp()
   scl.setFunction(I2C); scl.pullUp()
 
   #var buffer:uint8 = 0b00000000
-  #byteWrite(expander, buffer)
+  #writeBytex(expander, buffer)
   sleep(1000)
 
   while true:
-    #[digitWrite(expander, p1, on) #turn on the bit "p1" 
-    sleep(1500)
-    digitWrite(expander, p4, on) #turn on the bit "p4" 
-    sleep(1500)
-    digitWrite(expander, p1, off) #turn off the bit "p1" 
-    sleep(1500)
-    digitWrite(expander, p4, off) #turn off the bit "p4" ]#
-  
-    var p3val = digitRead(expander, p3)
-    #print("P3= " & $p3val)
-    #sleep(200)
-    if p3val == on:
-      led1.put(High)
+    exp1.setHigh() #set all led on
+    sleep(1000)
+    exp1.digitWrite(p1, on) #turn on the bit "p1" 
+    sleep(1000)
+    exp1.digitWrite(p4, on) #turn on the bit "p4" 
+    sleep(1000)
+    exp1.digitWrite(p1, off) #turn off the bit "p1" 
+    sleep(1000)
+    exp1.digitWrite(p4, off) #turn off the bit "p4" ]#
+    sleep(1000)
+    exp1.writeBytex(0xaa) #alternating leds 
+    sleep(1000)
+    exp1.setLow() #set all led off
+    sleep(1000)
+    #var lettura = [uint8(0)] #create a variable uint8 = 0
+    #exp1.readBytex(lettura) #read all byte on device 
+    #print("Leggo sul expander: " & $lettura[0]) #stampa tutto il byte
+    #[var p3val = exp1.digitRead(p3) #assigns p3val only the value of bit p3 (bool) 
+    print("P3= " & $p3val) #prints the value of bit p3
+    sleep(200)
+    if p3val == true:
+      exp1.digitWrite(p0, on)
     else:
-      led1.put(Low)
+      exp1.digitWrite(p0, off)]#
 
-    sleep(100)
+    #sleep(1900)
     
 #[ in ...csource/CMakeLists.txt add target_link_libraries(tests pico_stdlib hardware_adc) 
 add--> (hardware_i2c) ]#
