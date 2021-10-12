@@ -1,8 +1,9 @@
 import picostdlib/[gpio, i2c]
 import picostdlib
+from math import log2
 
 const 
-  pcf8574Ver* = "0.2.3"
+  pcf8574Ver* = "0.2.4"
   on = true
   off = false
   p0: uint8 = 0b00000001 #create a bit mask 
@@ -33,8 +34,10 @@ proc writeBit*(self: Pcf8574, pin: uint8, value: bool) =
     self.buffer = (self.buffer or pin) #go to act (turn on) the selected bit 
     self.writeByte(self.buffer)
   elif value == off:
-    self.buffer = (self.buffer xor pin) #go to act (turn off) the selected bit 
-    self.writeByte(self.buffer)
+    let ctrl = self.buffer shr uint8(log2(float(pin)))
+    if (ctrl mod 2) != 0:
+      self.buffer = (self.buffer xor pin) #go to act (turn off) the selected bit 
+      self.writeByte(self.buffer)
 
 proc readBit*(self: Pcf8574, pin: uint8): bool =
   var buff = [uint8(0)]
@@ -49,10 +52,12 @@ proc readBit*(self: Pcf8574, pin: uint8): bool =
     result =  off
 
 proc setLow*(self: Pcf8574) = #set buffer 0x00 all 0
-  self.writeByte(0x00)
+  self.buffer = 0x00
+  self.writeByte(self.buffer)
 
 proc setHigh*(self: Pcf8574) = #set buffer 0xff all 1
-  self.writeByte(0xff)
+  self.buffer = 0xff
+  self.writeByte(self.buffer)
 
 when isMainModule:
   stdioInitAll()
@@ -69,9 +74,9 @@ when isMainModule:
   while true:
     exp1.setHigh() #set all led on
     sleep(1000)
-    exp1.writeBit(p1, on) #turn on the bit "p1" 
+    exp1.writeBit(p1, off) #turn on the bit "p1" 
     sleep(800)
-    exp1.writeBit(p4, on) #turn on the bit "p4" 
+    exp1.writeBit(p4, off) #turn on the bit "p4" 
     sleep(1000)
     exp1.writeBit(p1, off) #turn off the bit "p1" 
     sleep(1000)
