@@ -2,7 +2,7 @@ import picostdlib/[gpio, i2c]
 import picostdlib
 
 const 
-  pcf8574Ver* = "0.2.2"
+  pcf8574Ver* = "0.2.3"
   on = true
   off = false
   p0: uint8 = 0b00000001 #create a bit mask 
