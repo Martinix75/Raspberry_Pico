@@ -2,7 +2,7 @@ import picostdlib/[gpio, i2c]
 import picostdlib
 
 const 
-  pcf8574Ver* = "0.2.1"
+  pcf8574Ver* = "0.2.2"
   on = true
   off = false
   p0: uint8 = 0b00000001 #create a bit mask 
@@ -33,7 +33,7 @@ proc digitWrite*(self: Pcf8574, pin: uint8, value: bool) =
     self.buffer = (self.buffer or pin) #go to act (turn on) the selected bit 
     self.writeBytex(self.buffer)
   elif value == off:
-    self.buffer = (self.buffer and pin) #go to act (turn off) the selected bit 
+    self.buffer = (self.buffer xor pin) #go to act (turn off) the selected bit 
     self.writeBytex(self.buffer)
 
 proc digitRead*(self: Pcf8574, pin: uint8): bool =
@@ -56,7 +56,7 @@ proc setHigh*(self: Pcf8574) = #set buffer 0xff
 
 when isMainModule:
   stdioInitAll()
-  let exp1 = Pcf8574(addressDevice: 0x20, blockk: i2c1, buffer: 0x00)# initializes the object if if necessary
+  let exp1 = Pcf8574(addressDevice: 0x20, blockk: i2c1)#, buffer: 0x00)# initializes the object if if necessary
 
   const sda = 2.Gpio 
   const scl = 3.Gpio 
@@ -73,17 +73,17 @@ when isMainModule:
     exp1.setHigh() #set all led on
     sleep(1000)
     exp1.digitWrite(p1, on) #turn on the bit "p1" 
-    sleep(1000)
+    sleep(800)
     exp1.digitWrite(p4, on) #turn on the bit "p4" 
     sleep(1000)
     exp1.digitWrite(p1, off) #turn off the bit "p1" 
     sleep(1000)
     exp1.digitWrite(p4, off) #turn off the bit "p4" ]#
-    sleep(1000)
-    exp1.writeBytex(0xaa) #alternating leds 
-    sleep(1000)
-    exp1.setLow() #set all led off
-    sleep(1000)
+    sleep(500)
+    #exp1.writeBytex(0xaa) #alternating leds 
+    #sleep(1000)
+    #exp1.setLow() #set all led off
+    #sleep(1000)
     #var lettura = [uint8(0)] #create a variable uint8 = 0
     #exp1.readBytex(lettura) #read all byte on device 
     #print("Leggo sul expander: " & $lettura[0]) #stampa tutto il byte
