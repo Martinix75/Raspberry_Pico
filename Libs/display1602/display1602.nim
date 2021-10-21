@@ -247,7 +247,7 @@ proc lcdCross(self: Lcd, strg: string, dir : bool, effect: uint8): string =
   else:
     result = buildString & strg
 
-proc lcdCleraLine(self: Lcd) = #deletes only the indicated line 
+proc lcdCleraLine*(self: Lcd) = #deletes only the indicated line 
   var poscurX: uint8 = uint8(0)
   self.moveTo(curx = poscurX, cury = self.cursorY) #moves the cursor to the beginning of the line 
   for _ in uint8(0)..self.numColum: #repeat how many columns there are 
