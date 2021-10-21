@@ -4,7 +4,7 @@ import picostdlib/[gpio, i2c]
 import picostdlib
 
 const 
-  disp1602Ver* = "0.4.3"
+  disp1602Ver* = "0.4.4"
   lcdClr = 0x01
   lcdHome = 0x02
   lcdEntryMode = 0x04
@@ -53,7 +53,7 @@ proc lcdShiftSx(self: Lcd, strg: string, speed: uint16, dir: bool, cross = false
 proc lcdShiftDx(self: Lcd, strg: string, speed: uint16, dir: bool, cross = false, effect: uint8)
 proc lcdCross(self: Lcd, strg: string, dir: bool, effect: uint8 = 0): string
 #proc lcdCrossSx(self: Lcd, strg: string, effect: uint8 = 0): string
-proc lcdCleraLine(self: Lcd)
+proc clearLine*(self: Lcd)
 proc lcdFormatStr(self: Lcd, strg: string, dir: bool): string
 proc moveTo*(self: Lcd, curx, cury: uint8)
 proc putChar*(self: Lcd, charx: char)
@@ -209,7 +209,7 @@ proc lcdShiftSx(self: Lcd, strg: string, speed: uint16, dir: bool, cross = false
   var dinamicString: string
   if cross == true:
     strgCopy = self.lcdCross(strgCopy, dir, effect)
-  self.lcdCleraLine()
+  self.clearLine()
   for charx in countup(0, len(strgCopy) - 1):#0..len(strg) - 1:
     dinamicString.add(strgCopy[charx]) #aggiunge una lettera ad ogni ciclo
     var fString = self.lcdFormatStr(dinamicString, dir) #controlla e manipola la stringa se troppo grande
@@ -223,7 +223,7 @@ proc lcdShiftDx(self: Lcd, strg: string, speed: uint16, dir: bool, cross = false
   var dinamicString: string
   if cross == true:
     strgCopy = self.lcdCross(strgCopy, dir, effect)
-  self.lcdCleraLine()
+  self.clearLine()
   for charx in countdown(len(strgCopy)-1,0): #aggiunge una lettera ad ogni ciclo
     dinamicString = dinamicString.addHead(strgCopy[charx]) #aggiunge il carattere in testa e non in coda
     var fString = self.lcdFormatStr(dinamicString, dir) #controlla e manipola la stringa se troppo grande
@@ -247,7 +247,7 @@ proc lcdCross(self: Lcd, strg: string, dir : bool, effect: uint8): string =
   else:
     result = buildString & strg
 
-proc lcdCleraLine*(self: Lcd) = #deletes only the indicated line 
+proc clearLine*(self: Lcd) = #deletes only the indicated line 
   var poscurX: uint8 = uint8(0)
   self.moveTo(curx = poscurX, cury = self.cursorY) #moves the cursor to the beginning of the line 
   for _ in uint8(0)..self.numColum: #repeat how many columns there are 
