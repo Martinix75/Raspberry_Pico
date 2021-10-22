@@ -4,7 +4,7 @@ import picostdlib/[gpio, i2c]
 import picostdlib
 
 const 
-  disp1602Ver* = "0.4.4"
+  disp1602Ver* = "1.0.0"
   lcdClr = 0x01
   lcdHome = 0x02
   lcdEntryMode = 0x04
@@ -43,25 +43,36 @@ type
     numLines, numColum: uint8
     cursorX, cursorY: uint8
 
+#---------- declaration of private procedures ----------
 proc lcdSendByte(self: Lcd, valore: uint8)
 proc lcdWriteWord(self: Lcd, command: uint8)
 proc lcdSendCommandInit(self: Lcd, comm: uint8)
 proc lcdSendCommand(self: Lcd, comm: uint8)
 proc lcdWriteData(self: Lcd, data: uint8)
-#proc lcdShiftSxDx(self: Lcd, strg: string, speed: uint16, dir: bool, cross = false)
+proc lcdFormatStr(self: Lcd, strg: string, dir: bool): string
 proc lcdShiftSx(self: Lcd, strg: string, speed: uint16, dir: bool, cross = false, effect: uint8) 
 proc lcdShiftDx(self: Lcd, strg: string, speed: uint16, dir: bool, cross = false, effect: uint8)
 proc lcdCross(self: Lcd, strg: string, dir: bool, effect: uint8 = 0): string
-#proc lcdCrossSx(self: Lcd, strg: string, effect: uint8 = 0): string
+proc toString(self: Lcd, seqx: seq[char]): string
+proc makeArray[T](charmap: array[0..7, T]): array[0..7, uint8]
+proc addHead(strg: string, chr: char): string
+
+#---------- declaration of public procedures ----------
 proc clearLine*(self: Lcd)
-proc lcdFormatStr(self: Lcd, strg: string, dir: bool): string
+proc clear*(self: Lcd)
 proc moveTo*(self: Lcd, curx, cury: uint8)
 proc putChar*(self: Lcd, charx: char)
+proc putStr*(self: Lcd, strg: string)
 proc shiftChar*(self: Lcd, charx: char, speed: uint16 = 400, dir = true)
 proc shiftString*(self: Lcd, strg: string, speed: uint16 = 400, dir = true, cross = false, effect: uint8 = 0)
 proc customChar*[T](self: Lcd, location: uint8, charmap: array[0..7, T])
-proc toString(self: Lcd, seqx: seq[char]): string
+proc displayOn*(self: Lcd)
+proc displayOff*(self: Lcd)
+proc backLightOn*(self: Lcd)
+proc backLightOff*(self: Lcd)
+proc hideCursor*(self: Lcd)
 
+#---------- private procedures ----------
 proc lcdSendByte(self: Lcd, valore: uint8) =
   let addVal = valore.unsafeAddr
   let lenn = csize_t(1)#valore.len*seizeof(valore))
@@ -112,77 +123,6 @@ proc lcdWriteData(self: Lcd, data: uint8) =
 proc makeArray[T](charmap: array[0..7, T]): array[0..7, uint8] =
   for index in countup(0,7):
     result[index] = uint8(charmap[index])
-
-proc moveTo*(self: Lcd, curx, cury: uint8) =
-  self.cursorX = curx
-  self.cursorY = cury
-  var addrx = self.cursorX and 0x3f
-  if (self.cursorY and 0x01) == uint8(1):
-    addrx = addrx + 0x40
-  if (self.cursorY and 0x02) == uint8(1):
-    addrx = addrx + self.numColum
-  self.lcdSendCommand(lcdDdRam or addrx)
-
-#[proc putChar*(self: Lcd, charx: char) =
-  if charx == '\n':
-    if impiledNewLine == 0:
-      discard
-    else:
-      self.cursorX = self.numColum
-  else:
-    self.lcdWriteData(uint8(ord(charx)))
-    self.cursorX = self.cursorX + 1
-  if self.cursorX >= self.numColum:
-    self.cursorX = 0
-    self.cursorY = self.cursorY + 1
-    if charx != '\n':
-      impiledNewLine = 0
-  if self.cursorY >= self.numLines:
-    self.cursorY = 0
-  self.moveTo(curx = self.cursorX, cury = self.cursorY)]#
-
-proc putChar*(self: Lcd, charx: char) =
-  self.lcdWriteData(uint8(ord(charx)))
-  self.cursorX = self.cursorX + 1
-  if self.cursorX > self.numColum - 1:
-    self.cursorX = self.numColum - 1
-  self.moveTo(curx = self.cursorX, cury = self.cursorY)
-
-proc shiftChar*(self: Lcd, charx: char, speed: uint16 = 400, dir = true) =
-  if dir == true:
-    for _ in countup(0, 16):
-      self.lcdWriteData(uint8(ord(charx)))
-      sleep(speed)
-      self.moveTo(curx = self.cursorX, cury = self.cursorY)
-      self.lcdWriteData(uint8(ord(' ')))
-      self.cursorX = self.cursorX + 1
-      self.moveTo(curx = self.cursorX, cury = self.cursorY)
-  else:
-    self.moveTo(curx = 16, cury = self.cursorY)
-    for _ in countdown(16, 0):
-      self.lcdWriteData(uint8(ord(charx)))
-      sleep(speed)
-      self.moveTo(curx = self.cursorX, cury = self.cursorY)
-      self.lcdWriteData(uint8(ord(' ')))
-      self.cursorX = self.cursorX - 1
-      self.moveTo(curx = self.cursorX, cury = self.cursorY)
-
-proc putStr*(self: Lcd, strg: string) = #print the string on the display 
-  let lenstrg = uint8(len(strg))
-  if lenstrg <= self.numColum:# da mettere <= ;intest >
-    for charx in strg:
-      self.putChar(charx)
-      #sleep(5)
-  else:
-    discard
-    self.shiftString(strg)
-
-proc shiftString*(self: Lcd, strg: string, speed: uint16 = 400, dir = true, cross = false, effect: uint8 = 0) = 
-  ##shift strinf sx or dx
-  if dir == true:
-    self.lcdShiftSx(strg, speed, dir, cross, effect) #sx
-  else:
-    self.lcdShiftDx(strg, speed, dir, cross, effect) #dx
 
 proc lcdFormatStr(self: Lcd, strg: string, dir: bool): string = #controlla la lunghezza delal stringa
   var chars = toSeq(strg)
@@ -246,14 +186,90 @@ proc lcdCross(self: Lcd, strg: string, dir : bool, effect: uint8): string =
     result = strg & buildString
   else:
     result = buildString & strg
+  
+proc initDisplay(self: Lcd) =
+  self.lcdSendCommandInit(lcdFunctionReset)
+  sleep(5)
+  self.lcdSendCommandInit(lcdFunctionReset)
+  sleep(5)
+  self.lcdSendCommandInit(lcdFunctionReset)
+  sleep(5)
+  self.lcdSendCommandInit(lcdFunction)
+  sleep(5)
+  if self.numLines > 4:
+    self.numLines = 4
+  if self.numColum > 40:
+    self.numColum = 40
+  self.cursorX = 0
+  self.cursorY = 0
+  impiledNewLine = 0
+  lcdBackLight = 1
+  self.displayOff()
+  self.backLightOn
+  self.clear()
+  self.lcdSendCommand(lcdEntryMode or lcdEntryInc)
+  self.hideCursor()
+  self.displayOn()
 
-proc clearLine*(self: Lcd) = #deletes only the indicated line 
+#---------- public procedures ----------
+proc moveTo*(self: Lcd, curx, cury: uint8) = ##moves the cursor over the lines and columns 
+  self.cursorX = curx
+  self.cursorY = cury
+  var addrx = self.cursorX and 0x3f
+  if (self.cursorY and 0x01) == uint8(1):
+    addrx = addrx + 0x40
+  if (self.cursorY and 0x02) == uint8(1):
+    addrx = addrx + self.numColum
+  self.lcdSendCommand(lcdDdRam or addrx)
+
+proc putChar*(self: Lcd, charx: char) = ##prints a single character
+  self.lcdWriteData(uint8(ord(charx)))
+  self.cursorX = self.cursorX + 1
+  if self.cursorX > self.numColum - 1:
+    self.cursorX = self.numColum - 1
+  self.moveTo(curx = self.cursorX, cury = self.cursorY)
+
+proc shiftChar*(self: Lcd, charx: char, speed: uint16 = 400, dir = true) = ##move the single character on the line
+  if dir == true:
+    for _ in countup(0, 16):
+      self.lcdWriteData(uint8(ord(charx)))
+      sleep(speed)
+      self.moveTo(curx = self.cursorX, cury = self.cursorY)
+      self.lcdWriteData(uint8(ord(' ')))
+      self.cursorX = self.cursorX + 1
+      self.moveTo(curx = self.cursorX, cury = self.cursorY)
+  else:
+    self.moveTo(curx = 16, cury = self.cursorY)
+    for _ in countdown(16, 0):
+      self.lcdWriteData(uint8(ord(charx)))
+      sleep(speed)
+      self.moveTo(curx = self.cursorX, cury = self.cursorY)
+      self.lcdWriteData(uint8(ord(' ')))
+      self.cursorX = self.cursorX - 1
+      self.moveTo(curx = self.cursorX, cury = self.cursorY)
+
+proc putStr*(self: Lcd, strg: string) = ##print the string on the display 
+  let lenstrg = uint8(len(strg))
+  if lenstrg <= self.numColum:# da mettere <= ;intest >
+    for charx in strg:
+      self.putChar(charx)
+      #sleep(5)
+  else:
+    discard
+    self.shiftString(strg)
+
+proc shiftString*(self: Lcd, strg: string, speed: uint16 = 400, dir = true, cross = false, effect: uint8 = 0) = 
+  ##shift strinf sx or dx
+  if dir == true:
+    self.lcdShiftSx(strg, speed, dir, cross, effect) #sx
+  else:
+    self.lcdShiftDx(strg, speed, dir, cross, effect) #dx
+
+proc clearLine*(self: Lcd) = ##deletes only the indicated line 
   var poscurX: uint8 = uint8(0)
   self.moveTo(curx = poscurX, cury = self.cursorY) #moves the cursor to the beginning of the line 
   for _ in uint8(0)..self.numColum: #repeat how many columns there are 
-    #self.moveTo(curx = 0, cury = self.cursorY) #moves the cursor to the beginning of the line 
     self.lcdWriteData(uint8(ord(' '))) #print "empty" character 
-    #self.cursorX = self.cursorX + 1
     poscurX = poscurX + uint8(1)
     self.moveTo(curx = poscurX, cury = self.cursorY) #moves the cursor one position
 
@@ -266,7 +282,7 @@ proc centerString*(self: Lcd, charx: string) = ##prints the string in the center
   self.moveTo(curx = posCur, cury = self.cursorY)
   self.putStr(charx)
 
-proc customChar*[T](self: Lcd, location: uint8, charmap: array[0..7, T])=
+proc customChar*[T](self: Lcd, location: uint8, charmap: array[0..7, T])= ##macke custom char
   let charOk = makeArray(charmap)
   let location = location and 0x07
   self.lcdSendCommand(lcdCgRam or (location shl uint8(3)))
@@ -275,8 +291,6 @@ proc customChar*[T](self: Lcd, location: uint8, charmap: array[0..7, T])=
     self.lcdWriteData(charOk[line])
     sleepMicroseconds(40)
   self.moveTo(self.cursorX, self.cursorY)
-
-
 
 proc displayOn*(self: Lcd) =
   self.lcdSendCommand(lcdOnCtrl or lcdOnDisplay)
@@ -310,82 +324,29 @@ proc clear*(self: Lcd) =
   self.cursorX = 0 
   self.cursorY = 0
 
-proc initDisplay(self: Lcd) =
-  self.lcdSendCommandInit(lcdFunctionReset)
-  sleep(5)
-  self.lcdSendCommandInit(lcdFunctionReset)
-  sleep(5)
-  self.lcdSendCommandInit(lcdFunctionReset)
-  sleep(5)
-  self.lcdSendCommandInit(lcdFunction)
-  sleep(5)
-  if self.numLines > 4:
-    self.numLines = 4
-  if self.numColum > 40:
-    self.numColum = 40
-  self.cursorX = 0
-  self.cursorY = 0
-  impiledNewLine = 0
-  lcdBackLight = 1
-  self.displayOff()
-  self.backLightOn
-  self.clear()
-  self.lcdSendCommand(lcdEntryMode or lcdEntryInc)
-  self.hideCursor()
-  self.displayOn()
-
 proc init*(i2c: I2cInst, lcdAdd:uint8, numLines:uint8, numColum:uint8): Lcd =
   result = Lcd(i2c: i2c, lcdadd: lcdAdd, numLines: numlines, numColum: numColum)
   result.initDisplay()
-
 
 when isMainModule:
   stdioInitAll()
   const sda = 2.Gpio 
   const scl = 3.Gpio 
-  #const address = 0x27
 
   i2c1.init(100000)
   sda.setFunction(I2C); sda.pullUp()
   scl.setFunction(I2C); scl.pullUp()
-  #setupI2c(i2c1, 2.Gpio, 3.Gpio, 100000, true)
 
-
-  let lcdx = init(i2c = i2c1, lcdAdd = 0x27, numLines = 2, numColum = 16)
-  #let usb = PicoUsb()
-  #print("---init----" & '\n')
-  #lcdx.init()
-  #print("---disp init----" & '\n')
-  sleep(2000)
-  type 
-    Castom = array[0..7, uint8]
-  var bell: Castom
-  bell = [uint8(0x04),uint8(0x0e),uint8(0x0e),uint8(0x0e),uint8(0x1f),uint8(0x00),uint8(0x04),uint8(0x00)]
+  let lcd = init(i2c = i2c1, lcdAdd = 0x27, numLines = 2, numColum = 16)
+  let nim = [0x00,0x11,0x15,0x15,0x1f,0x1b,0x1f,0x00]
+  lcd.customChar(0, nim)
   while true:
-    #if usb.isReady == true:
-    lcdx.clear()
-    lcdx.shiftString("Mx2", dir = false, cross = true, effect = 1)
+    lcd.clear()
+    lcd.putChar(char(0))
+    lcd.centerString("Test Lib")
+    lcd.moveto(15,0)
+    lcd.putChar(char(0))
+    lcd.moveTo(0,1)
+    lcd.shiftString("Ver: " & disp1602Ver, dir = true, cross = true, effect = 0)
     sleep(1500)
     
-    #[lcdx.customChar(0,bell)
-    lcdx.putChar(char(0))
-    sleep(2000)
-    lcdx.clear()
-    lcdx.putStr("Lcd Version:")
-    lcdx.moveTo(0,1)
-    lcdx.centerString(disp1602Ver)
-    sleep(5000)
-    lcdx.clear()
-    lcdx.moveTo(0,1)
-    lcdx.shiftString("Right Shift 123456789 >", dir = false)
-    lcdx.moveTo(0,0)
-    lcdx.shiftString("< 123456789 Left Shift", dir = true)
-    sleep(2000)
-    lcdx.clear()
-    lcdx.putStr("String > 16 Chars!!")
-    sleep(3000)
-    lcdx.clear()
-    lcdx.shiftChar('>')
-    lcdx.moveTo(0,1)
-    lcdx.shiftChar('<', 200, false)
-    sleep(2000)]#
