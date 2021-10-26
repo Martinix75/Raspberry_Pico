@@ -324,7 +324,7 @@ proc clear*(self: Lcd) =
   self.cursorX = 0 
   self.cursorY = 0
 
-proc init*(i2c: I2cInst, lcdAdd:uint8, numLines:uint8, numColum:uint8): Lcd =
+proc initDisplay*(i2c: I2cInst, lcdAdd:uint8, numLines:uint8, numColum:uint8): Lcd =
   result = Lcd(i2c: i2c, lcdadd: lcdAdd, numLines: numlines, numColum: numColum)
   result.initDisplay()
 
@@ -337,7 +337,7 @@ when isMainModule:
   sda.setFunction(I2C); sda.pullUp()
   scl.setFunction(I2C); scl.pullUp()
 
-  let lcd = init(i2c = i2c1, lcdAdd = 0x27, numLines = 2, numColum = 16)
+  let lcd = initDisplay(i2c = i2c1, lcdAdd = 0x27, numLines = 2, numColum = 16)
   let nim = [0x00,0x11,0x15,0x15,0x1f,0x1b,0x1f,0x00]
   lcd.customChar(0, nim)
   while true:
