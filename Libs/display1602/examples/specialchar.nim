@@ -22,4 +22,4 @@ lcd.centerString("W Nim") #use "centerstring" to center the text on the display
 lcd.moveTo(15,0) #moves the cursor to position 15
 lcd.putChar(char(0)) #reprints the "0" character in the new position
 lcd.moveTo(0,1) #we go to the second row, column 0
-lcd.putStr("Version: " & disp1602Ver) #we print the library version "in the normal way"
+lcd.putString("Version: " & disp1602Ver) #we print the library version "in the normal way"
