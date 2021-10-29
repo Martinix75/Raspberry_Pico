@@ -62,7 +62,7 @@ proc clearLine*(self: Lcd)
 proc clear*(self: Lcd)
 proc moveTo*(self: Lcd, curx, cury: uint8)
 proc putChar*(self: Lcd, charx: char)
-proc putStr*(self: Lcd, strg: string)
+proc putString*(self: Lcd, strg: string)
 proc shiftChar*(self: Lcd, charx: char, speed: uint16 = 400, dir = true)
 proc shiftString*(self: Lcd, strg: string, speed: uint16 = 400, dir = true, cross = false, effect: uint8 = 0)
 proc customChar*[T](self: Lcd, location: uint8, charmap: array[0..7, T])
@@ -155,7 +155,7 @@ proc lcdShiftSx(self: Lcd, strg: string, speed: uint16, dir: bool, cross = false
     var fString = self.lcdFormatStr(dinamicString, dir) #controlla e manipola la stringa se troppo grande
     self.cursorX = self.numColum - uint8(len(fString)) #calcola posizione inizio stringa
     self.moveTo(self.cursorX, self.cursorY) #muovi ora il cursore li
-    self.putStr(fString) #stampa la stringa
+    self.putString(fString) #stampa la stringa
     sleep(speed)
 
 proc lcdShiftDx(self: Lcd, strg: string, speed: uint16, dir: bool, cross = false, effect: uint8) =
@@ -169,7 +169,7 @@ proc lcdShiftDx(self: Lcd, strg: string, speed: uint16, dir: bool, cross = false
     var fString = self.lcdFormatStr(dinamicString, dir) #controlla e manipola la stringa se troppo grande
     self.cursorX = 0
     self.moveTo(self.cursorX, self.cursorY) #muovi ora il cursore li
-    self.putStr(fString) #stampa la stringa
+    self.putString(fString) #stampa la stringa
     sleep(speed)
 
 proc lcdCross(self: Lcd, strg: string, dir : bool, effect: uint8): string =
@@ -248,7 +248,7 @@ proc shiftChar*(self: Lcd, charx: char, speed: uint16 = 400, dir = true) = ##mov
       self.cursorX = self.cursorX - 1
       self.moveTo(curx = self.cursorX, cury = self.cursorY)
 
-proc putStr*(self: Lcd, strg: string) = ##print the string on the display 
+proc putString*(self: Lcd, strg: string) = ##print the string on the display 
   let lenstrg = uint8(len(strg))
   if lenstrg <= self.numColum:# da mettere <= ;intest >
     for charx in strg:
@@ -280,7 +280,7 @@ proc centerString*(self: Lcd, charx: string) = ##prints the string in the center
   let round = uint8(round(division))
   let posCur: uint8 = numColum - round
   self.moveTo(curx = posCur, cury = self.cursorY)
-  self.putStr(charx)
+  self.putString(charx)
 
 proc customChar*[T](self: Lcd, location: uint8, charmap: array[0..7, T])= ##macke custom char
   let charOk = makeArray(charmap)
@@ -347,6 +347,7 @@ when isMainModule:
     lcd.moveto(15,0)
     lcd.putChar(char(0))
     lcd.moveTo(0,1)
-    lcd.shiftString("Ver: " & disp1602Ver, dir = true, cross = true, effect = 0)
+    lcd.centerString("Ver: " & disp1602Ver)
+    #lcd.shiftString("Ver: " & disp1602Ver, dir = true, cross = true, effect = 0)
     sleep(1500)
     
