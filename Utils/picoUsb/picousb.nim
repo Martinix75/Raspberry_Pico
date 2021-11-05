@@ -1,33 +1,36 @@
 import picostdlib
-const picousbVer* = "0.1.0"
+const picousbVer* = "0.1.1"
 
 type
     PicoUsb*  = ref object 
-      setBool:bool
-      stringX:string
+      setBool: bool
+      stringX: string
+      readCh: char
 
-proc readLineInternal(self:PicoUsb,time:uint32=200)= #proc lettura generale di una stringa.
-    var readCh:char
-    while true: #gira finche non trovi 0xff (255).
-      readCh = getCharWithTimeout(time) #salva il carattere nella variabile.
-      if readCh == '\255': #se trivi 255..
-        break #interrompi il while!
-      else: #se non trovi 255...
-        self.stringX.add($readCh) #aggiungi il carattere in stringX dopo averlo convertito.
+#---- private functions -------
+proc readLineInternal(self: PicoUsb, time: uint32 = 100) = #proc general reading of a usb string.
+    #var readCh: char
+    while true: #until you find '\ 255' it run... 
+      self.readCh = getCharWithTimeout(time) #save the character in the variable  readCh.
+      if self.readCh == '\255':  #if  found '\255'..
+        break #interrupt the while!
+      else: #If there is not...
+        self.stringX.add($self.readCh) #add the character in stringX (string) after converting it.
 
-proc setRedy(self:PicoUsb)= #proc per settare se ce qualcosa o no nel buffer usb.
-    readLineInternal(self) #leggi usando la funzione privata.
-    if self.stringX.len > 0: #se la stringa non è "vuota..
-        self.setBool = true #setta la variabile a true.
-    else: #altriment....
-        self.setBool = false #false se la stringa è vuota.
+proc setReady(self: PicoUsb) = #proc to check if there is anything in the usb buffer. 
+    readLineInternal(self) #read using the private procedure readLineInternal.
+    if self.stringX.len > 0: #if string stringX is not empty .. 
+        self.setBool = true #set setbool = true.
+    else: #if string stringX is empty .. 
+        self.setBool = false #set setbool = false .
 
 #----- pubblic functions --------
-proc isRedy*(self:PicoUsb):bool= #proc per il controllo dello stato.
-    setRedy(self) #chaima la funzione per settare la variabile.
-    return self.setBool #ritorna il valore.
+proc isReady*(self: PicoUsb): bool = #procedure for checking the buffer status. 
+    setReady(self) #calls the procedure to set the variable.
+    return self.setBool #return the value.
 
-proc readLine*(self:PicoUsb,time:uint32=200):string=
-    readLineInternal(self, time) #leggi con al funziona apposita.
-    result = self.stringX #manda la stringa completa.
-    self.stringX = "" #resetta (porta a 0) stringx.
+proc readLine*(self: PicoUsb, time: uint32 = 100): string = #proc for read the string in usb 
+    readLineInternal(self, time) #read with the private function.
+    result = self.stringX #returns the complete string .
+    self.stringX = "" #reset variable stringX (= "" empty string).
+    self.readCh = '\255' #reset buffer
