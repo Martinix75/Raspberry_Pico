@@ -1,8 +1,6 @@
- 
-import picostdlib/[gpio, i2c]
-import picostdlib
+import picostdlib/[stdio, gpio, i2c, time]
 import display1602
-
+#update for picostdlib 0.2.7
 stdioInitAll()
 const
   sda = 2.Gpio 
