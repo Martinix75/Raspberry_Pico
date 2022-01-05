@@ -1,10 +1,11 @@
 from sequtils import toSeq
 from math import round
-import picostdlib/[gpio, i2c]
-import picostdlib
+import picostdlib/[stdio, gpio, i2c, time]
+#import picostdlib
 
 const 
-  disp1602Ver* = "1.0.0"
+  disp1602Ver* = "1.1.0"
+  #update for picostdlib >= 0.2.7
   lcdClr = 0x01
   lcdHome = 0x02
   lcdEntryMode = 0x04
