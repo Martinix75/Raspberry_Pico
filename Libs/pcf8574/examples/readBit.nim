@@ -1,5 +1,5 @@
-import picostdlib/[gpio, i2c]
-import picostdlib
+#update for picostdlib >= 0.2.7
+import picostdlib/[stdio, gpio, i2c, time]
 import pcf8574
 
 stdioInitAll()
@@ -22,7 +22,7 @@ proc blink(val:uint8) =
     sleep(450)
 
 let exp = initExpander(blokk = i2c1, expAdd = 0x20)
-let time: uint32 = 800
+let timeSl: uint32 = 800
 var readBuffer = [uint8(0)] #make array uint8 (ini = 0; 1 element)
 var bit1, bit2: bool
 
