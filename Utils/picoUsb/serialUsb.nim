@@ -1,6 +1,4 @@
-import picostdlib/[gpio]
-import picostdlib
-#import martin
+import picostdlib/[stdio, time]
 import picousb
 
 stdioInitAll()
