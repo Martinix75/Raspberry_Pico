@@ -1,9 +1,9 @@
-import picostdlib/[gpio, i2c]
-import picostdlib
+import picostdlib/[stdio, gpio, i2c, time]
+
 from math import log2
 
 const 
-  pcf8574Ver* = "1.0.0"
+  pcf8574Ver* = "1.1.0"
   p0*: uint8 = 0b00000001 #create a bit mask 
   p1*: uint8 = 0b00000010
   p2*: uint8 = 0b00000100
@@ -70,17 +70,17 @@ when isMainModule:
   sda.setFunction(I2C); sda.pullUp()
   scl.setFunction(I2C); scl.pullUp()
 
-  let time: uint32 = 100
+  let timeSl: uint32 = 100
   var superCar: uint8 = 0x01
   while true:
     for _ in countup(0,6):
       exp.writeByte(superCar)
       superCar = superCar shl 1
-      sleep(time)
+      sleep(timeSl)
     for _ in countup(0,6):
       exp.writeByte(superCar)
       superCar = superCar shr 1
-      sleep(time)
+      sleep(timeSl)
 
 #[ in ...csource/CMakeLists.txt add target_link_libraries(tests pico_stdlib hardware_adc) 
 add--> (hardware_i2c) ]#
