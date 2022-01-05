@@ -1,9 +1,8 @@
-import picostdlib/[gpio, i2c]
-import picostdlib
+import picostdlib/[stdio, gpio, i2c, time]
 from strutils import toHex
 import picousb 
-
-const i2cScanner = "1.0.0"
+#update for picostdlib 0.2.7
+const i2cScanner = "1.1.0"
 proc scan(i2cc: I2cInst, sda, scl: uint8): seq[string]
 proc scanBlock(i2cc: I2cInst, pins: array[6, array[2, int]], ch: string )
 proc vision(listAdd: seq[string])
