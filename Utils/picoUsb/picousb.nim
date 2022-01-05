@@ -1,5 +1,6 @@
-import picostdlib
-const picousbVer* = "0.1.1"
+import picostdlib/[stdio]
+# update for picostdlib 0.2.7
+const picousbVer* = "0.2.0"
 
 type
     PicoUsb*  = ref object 
