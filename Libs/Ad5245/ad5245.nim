@@ -27,14 +27,14 @@ proc getValue*(self: Ad5245): uint8
 
 #---------- Start Private Pocs -------
 proc writeAd5245(self: Ad5245, data: uint8, instruction: uint8 = 0) = #write 2 Byte in Ad5245 gneric procedure.
-  let arrayData = [instruction, data] #make array with de bytes (instruction , data)
+  let arrayData = [instruction, data] #make array with two bytes (instruction , data)
   let addressElement1 = arrayData[0].unsafeAddr #find the address of the first element in the array
   writeBlocking(self.blokk, self.address, addressElement1, 2, true) #write in to I2C (2 Bytes)
   
-proc calculateValWA(self: Ad5245, ohmValue: int): uint8 = #Calculate the value to go to the Ad5245 calculating (W-A)
+proc calculateValWA(self: Ad5245, ohmValue: int): uint8 = # calculate the value to go to the Ad5245 calculating (W-A)
   result = uint8(round(-(((256*ohmValue)-(256*resW)-(256*self.resValue))/self.resValue)-2))
 
-proc calculateValWB(self: Ad5245, ohmValue: int): uint8 = #Calculate the value to go to the Ad5245 calculating (W-B)
+proc calculateValWB(self: Ad5245, ohmValue: int): uint8 = # calculate the value to go to the Ad5245 calculating (W-B)
   result = uint8(round(((256*ohmValue)-(256*resW))/self.resValue))+1
 #---------- End Private Pocs ---------
 
@@ -42,7 +42,7 @@ proc calculateValWB(self: Ad5245, ohmValue: int): uint8 = #Calculate the value t
 proc initAd5245*(blokk: I2cInst, address: uint8, resValue: int): Ad5245 = #initialize the type Ad5245
   result = Ad5245(blokk: blokk, address: address, resValue: resValue) #blok and adress i2c
 
-proc setInstruction*(self: Ad5245, instruction: uint8) = #proc fro write instructions see manale Ad5245
+proc setInstruction*(self: Ad5245, instruction: uint8) = #proc from write instructions see manale Ad5245
   let valueoOk = [uint8(64), uint8(32)] # 64 = RS (restet wiper to midle scale) 32 = SD open A-W
   if instruction in valueoOk:
     self.writeAd5245(data = uint8(0), instruction = instruction)
@@ -79,16 +79,16 @@ proc getResWA*(self: Ad5245): int = #proc for read value write in ad5245 in Ohm
   var readValue: array[0..1, int]
   let addressElement1 = readValue[0].unsafeAddr
   discard readBlocking(self.blokk, self.address, addressElement1, 1, false)
-  result = int((((256-readValue[0])/256)*resValueFloat)+resW) #fron value calculate value of resistance
+  result = int((((256-readValue[0])/256)*resValueFloat)+resW) #from value calculate value of resistance
 
 proc getResWB*(self: Ad5245): int = #proc for read value write in ad5245 in Ohm
   let resValueFloat = float(self.resValue)
   var readValue: array[0..1, int]
   let addressElement1 = readValue[0].unsafeAddr
   discard readBlocking(self.blokk, self.address, addressElement1, 1, false)
-  result = int((((readValue[0])/256)*resValueFloat)+resW) #fron value calculate value of resistance
+  result = int((((readValue[0])/256)*resValueFloat)+resW) #from value calculate value of resistance
 
-proc getValue*(self: Ad5245): uint8 = #return teh value vrite in register.
+proc getValue*(self: Ad5245): uint8 = #return the value write in register.
   var readValue: array[0..1, uint8]
   let addressElement1 = readValue[0].unsafeAddr
   discard readBlocking(self.blokk, self.address, addressElement1, 1, false)
