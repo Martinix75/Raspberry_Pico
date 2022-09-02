@@ -3,7 +3,7 @@ import picostdlib/[stdio, gpio, i2c, time]
 from math import log2
 
 const 
-  pcf8574Ver* = "1.1.0"
+  pcf8574Ver* = "1.2.0"
   p0*: uint8 = 0b00000001 #create a bit mask 
   p1*: uint8 = 0b00000010
   p2*: uint8 = 0b00000100
@@ -58,12 +58,12 @@ proc setHigh*(self: Pcf8574) = #set buffer 0xff all 1
   self.buffer = 0xff
   self.writeByte(self.buffer)
 
-proc initExpander*(blokk: I2cInst, expAdd: uint8, buffer: uint8 = 0x00): Pcf8574 =
+proc newExpander*(blokk: I2cInst, expAdd: uint8, buffer: uint8 = 0x00): Pcf8574 =
   result = Pcf8574(blockk: blokk, expAdd: expAdd, buffer: buffer)
 
 when isMainModule:
   stdioInitAll()
-  let exp = initExpander(blokk = i2c1, expAdd = 0x20)
+  let exp = newExpander(blokk = i2c1, expAdd = 0x20)
   const sda = 2.Gpio 
   const scl = 3.Gpio 
   init(i2c1,10000)
@@ -82,5 +82,3 @@ when isMainModule:
       superCar = superCar shr 1
       sleep(timeSl)
 
-#[ in ...csource/CMakeLists.txt add target_link_libraries(tests pico_stdlib hardware_adc) 
-add--> (hardware_i2c) ]#
