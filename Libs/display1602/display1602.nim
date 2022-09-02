@@ -4,7 +4,7 @@ import picostdlib/[stdio, gpio, i2c, time]
 #import picostdlib
 
 const 
-  disp1602Ver* = "1.1.0"
+  disp1602Ver* = "1.2.0"
   #update for picostdlib >= 0.2.7
   lcdClr = 0x01
   lcdHome = 0x02
@@ -59,6 +59,7 @@ proc makeArray[T](charmap: array[0..7, T]): array[0..7, uint8]
 proc addHead(strg: string, chr: char): string
 
 #---------- declaration of public procedures ----------
+proc newDisplay*(i2c: I2cInst, lcdAdd:uint8, numLines:uint8, numColum:uint8): Lcd
 proc clearLine*(self: Lcd)
 proc clear*(self: Lcd)
 proc moveTo*(self: Lcd, curx, cury: uint8)
@@ -325,7 +326,7 @@ proc clear*(self: Lcd) =
   self.cursorX = 0 
   self.cursorY = 0
 
-proc initDisplay*(i2c: I2cInst, lcdAdd:uint8, numLines:uint8, numColum:uint8): Lcd =
+proc newDisplay*(i2c: I2cInst, lcdAdd:uint8, numLines:uint8, numColum:uint8): Lcd =
   result = Lcd(i2c: i2c, lcdadd: lcdAdd, numLines: numlines, numColum: numColum)
   result.initDisplay()
 
@@ -338,7 +339,7 @@ when isMainModule:
   sda.setFunction(I2C); sda.pullUp()
   scl.setFunction(I2C); scl.pullUp()
 
-  let lcd = initDisplay(i2c = i2c1, lcdAdd = 0x27, numLines = 2, numColum = 16)
+  let lcd = newtDisplay(i2c = i2c1, lcdAdd = 0x27, numLines = 2, numColum = 16)
   let nim = [0x00,0x11,0x15,0x15,0x1f,0x1b,0x1f,0x00]
   lcd.customChar(0, nim)
   while true:
