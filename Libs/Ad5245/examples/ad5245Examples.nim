@@ -5,7 +5,7 @@ import picousb
 
 stdioInitAll()
 setupI2c(blokk = i2c1, psda = 18.Gpio, pscl = 19.Gpio, freq = 100_000) #max 400khz.
-let potenz = initAd5245(blokk = i2c1, address = 0x2C, resValue = 5000) #set blol & address sugar mode.
+let potenz = newAd5245(blokk = i2c1, address = 0x2C, resValue = 5000) #set blol & address sugar mode.
 let usb = PicoUsb() #for comication whit ad5425
 
 var
