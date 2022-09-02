@@ -9,7 +9,7 @@ i2c1.init(100000)
 sda.setFunction(I2C); sda.pullUp()
 scl.setFunction(I2C); scl.pullUp()
 
-let lcd = initDisplay(i2c = i2c1, lcdAdd = 0x27, numColum = 16, numLines = 2)
+let lcd = newDisplay(i2c = i2c1, lcdAdd = 0x27, numColum = 16, numLines = 2)
 #various printing tests
 let pos = [5,15,3,11,0,7,9,2,4,10]
 while true:
