@@ -1,7 +1,7 @@
 import picostdlib/[i2c]
 from math import round
 
-const ad5245Ver* = "1.0.0"
+const ad5245Ver* = "1.1.0"
 const resW = 2*50 #value of teh wiper contact resistence.
 
 type #new type for the ad5245
@@ -11,7 +11,7 @@ type #new type for the ad5245
     resValue: int
     
 #---------- Proc Prototype ----------
-proc initAd5245*(blokk: I2cInst, address: uint8, resValue: int): Ad5245
+proc newAd5245*(blokk: I2cInst, address: uint8, resValue: int): Ad5245
 proc writeAd5245(self: Ad5245, data: uint8, instruction: uint8 = 0)
 proc setValue*(self: Ad5245, data: var uint8)
 proc setInstruction*(self: Ad5245, instruction: uint8)
@@ -39,7 +39,7 @@ proc calculateValWB(self: Ad5245, ohmValue: int): uint8 = # calculate the value 
 #---------- End Private Pocs ---------
 
 #---------- Start Pubblic Procs ------
-proc initAd5245*(blokk: I2cInst, address: uint8, resValue: int): Ad5245 = #initialize the type Ad5245
+proc newAd5245*(blokk: I2cInst, address: uint8, resValue: int): Ad5245 = #initialize the type Ad5245
   result = Ad5245(blokk: blokk, address: address, resValue: resValue) #blok and adress i2c
 
 proc setInstruction*(self: Ad5245, instruction: uint8) = #proc from write instructions see manale Ad5245
@@ -101,7 +101,7 @@ when isMainModule:
   import picousb 
   stdioInitAll()
   setupI2c(blokk = i2c1, psda = 18.Gpio, pscl = 19.Gpio, freq = 100_000)#max 400khz
-  let pot = initAd5245(blokk = i2c1, address = 0x2C, resValue = 5000)
+  let pot = newAd5245(blokk = i2c1, address = 0x2C, resValue = 5000)
   let usb = PicoUsb()
   var value: uint8
   var ohmm: int
