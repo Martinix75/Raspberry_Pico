@@ -9,7 +9,7 @@ i2c1.init(100000)
 sda.setFunction(I2C); sda.pullUp()
 scl.setFunction(I2C); scl.pullUp()
 
-let lcd = initDisplay(i2c = i2c1, lcdAdd = 0x27, numColum = 16, numLines = 2)
+let lcd = newDisplay(i2c = i2c1, lcdAdd = 0x27, numColum = 16, numLines = 2)
 #castom char:
 
 let crown = [0x00,0x11,0x15,0x15,0x1f,0x1b,0x1f,0x00] #custom char 5x8
