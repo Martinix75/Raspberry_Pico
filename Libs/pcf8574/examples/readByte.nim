@@ -21,7 +21,7 @@ proc blink(val:uint8) =
     DefaultLedPin.put(Low)
     sleep(450)
 
-let exp = initExpander(blokk = i2c1, expAdd = 0x20)
+let exp = newExpander(blokk = i2c1, expAdd = 0x20)
 #let time: uint32 = 800
 var readBuffer = [uint8(0)] #make array uint8 (ini = 0)
 while true:
