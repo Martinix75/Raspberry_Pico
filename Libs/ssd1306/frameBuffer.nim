@@ -1,15 +1,28 @@
+#[
+Framebuffer generic for display written in Nim.
+port from framebuffer.py (Damien P. George and Tony DiCola)
+The MIT License (MIT)
+Copyright (c) 2022 Martin Andrea (Martinix75)
+testet with Nim 1.6.6
+
+author Andrea Martin (Martinix75)
+https://github.com/Martinix75/Raspberry_Pico/tree/main/Libs/ssd1306
+]#
+
+import picostdlib/[stdio, gpio, time, i2c] #solo in test
 import std/[options]
 from strutils import split
 import font5x8
 
-const frameBufferVer* = "0.6.2"
-#stdioInitAll()
+const frameBufferVer* = "0.7.3"
+stdioInitAll()
 type 
   Framebuffer* = ref object of RootObj
     fbWidth*, fbHeight*, fbStride*: int #per ora metto tutti i membi acessibili(pubblici poi vediamo s eprivatizzare)
+    xSize*, ySize*: int
     fbRotation*: uint8
     fbBuff*: seq[byte]
-    fbFont: array[0..95, array[0..4, byte]]
+    fbFont*: array[0..95, array[0..4, byte]]
     #fbFontName: string
     
 # ---------- INIZIO Prototipi Procedure Private ----------
@@ -17,19 +30,19 @@ proc setPixelFb(self: Framebuffer; x, y, color: int)
 proc getPixelFb(self: Framebuffer; x, y: int): uint8
 proc fillRectD1(self: Framebuffer; x ,y ,width, height, color: int)
 proc fillRect(self: Framebuffer; x, y, width, height, color: int)
-proc loadChars(self: Framebuffer; charType="std"): tuple[sizeW, sizeH: int]
-proc drawChar(self: Framebuffer; dcChar: char; x, y, color, txWidth, txHeight: int; size=1)
+proc loadChars*(self: Framebuffer; charType="std") #: tuple[sizeW, sizeH: int]
+proc drawChar(self: Framebuffer; dcChar: char; x, y, color, txHeight: int; size=1)
 proc fillFb(self: Framebuffer; color: int)
 # ---------- FINE Prototipi Procedure Private ------------
 # ---------- INIZIO Prototipi Procedure Pubbliche --------
 proc clear*(self: Framebuffer; color=0)
 proc rect*(self: Framebuffer; x ,y, width, height, color: int, fill=false)
-proc line*(self: Framebuffer, xZero, yZero, xOne, yOne, color: int)
+proc line*(self: Framebuffer, xStr, yStr, xEnd, yEnd, color: int)
 proc pixel(self: Framebuffer; x, y: int; color=none(int)): Option[uint8]
 proc hline*(self: Framebuffer; x, y, width, color: int)
 proc vline*(self: Framebuffer; x, y, height, color: int)
 proc circle*(self: Framebuffer; centerX, centerY, radius, color: int)
-proc text*(self: Framebuffer; text: string; x, y, color: int; charType="std"; size=1,)
+proc text*(self: Framebuffer; text: string; x, y, color: int; charType="std"; size=1, direct=true)
 # ---------- FINE Prototipi Procedure Pubbliche ----------
 
 proc setPixelFb(self: Framebuffer; x, y, color: int) = #ok!
@@ -135,18 +148,18 @@ proc hline*(self: Framebuffer; x, y, width, color: int) = #ok!
 proc vline*(self: Framebuffer; x, y, height, color: int) = #ok!
   self.rect(x=x ,y=y, width=1, height=height, color=color, fill=true)
     
-proc line*(self: Framebuffer, xZero, yZero, xOne, yOne, color: int) = #ok!
+proc line*(self: Framebuffer, xStr, yStr, xEnd, yEnd, color: int) = #ok!
   var
-    lXzero = int(xZero)
-    lYzero = int(yZero)
-    lXone = int(xOne)
-    lYone = int(yOne)
+    lXzero = xStr
+    lYzero = yStr
+    lXone = xEnd
+    lYone = yEnd
     err: float
   let
     dX = abs(lXone-lXzero)
     dY = abs(lYone-lYzero)
-    sX = if xZero > xOne: -1 else: 1
-    sY = if yZero > yOne: -1 else: 1
+    sX = if xStr > xEnd: -1 else: 1
+    sY = if yStr > yEnd: -1 else: 1
   if dX > dY:
     err = float(dX) / 2.0
     while lXzero != lXone:
@@ -165,7 +178,8 @@ proc line*(self: Framebuffer, xZero, yZero, xOne, yOne, color: int) = #ok!
         lYzero += sX
         err += float(dY)
       lYzero += sY
-
+  discard self.pixel(x=lXzero, y=lYzero,color=some(color))
+  
 proc circle*(self: Framebuffer; centerX, centerY, radius, color: int) =
   var
     x = radius-1
@@ -194,37 +208,53 @@ proc circle*(self: Framebuffer; centerX, centerY, radius, color: int) =
 proc clear*(self: Framebuffer; color=0) =
   self.fillFb(color=color)
   
-proc text*(self: Framebuffer; text: string; x, y, color: int; charType="std"; size=1,) =
+proc text*(self: Framebuffer; text: string; x, y, color: int; charType="std"; size=1, direct=true) =
+  let
+
+    #self.fbRatioSize = 3#int(1.25*float(setxy.sizeW))
+    dotCharMax = int(((self.fbWidth/8)+5)*5) #calcola i punti massimi utilizzabili dai caratteri (tile per lo schift x)
+    #ratioSize = int(1.25*float(self.xSize))
   var
     fraWidth = self.fbWidth
     fraHeight = self.fbHeight
     xChar: int
-    txWidth, txHeight: int
+    #self.xSize, txHeight: int
+    txHeight: int
     tY = y
-  let setxy = self.loadChars(charType)
+    tText = text
+  if direct == true:
+    self.loadChars(charType)# deve tirare su (aggiornare) i font ogni volta che si invoca test
+  while (len(tText)*5)+int(float(x)*0.9) >= dotCharMax+1: #(1/ratioSize)) >= dotCharMax+1: #x deve valere x*0.8 altrimenti calcola sballato
+    #print(tText)
+    tText = tText[0..^2]
+    if len(tText) == 0:
+      break
+
   if self.fbRotation in [uint8(1), uint8(3)] == true:
     fraWidth=fraHeight; fraHeight=fraWidth
-  for chunk in text.split('\n'):
-    txWidth = setxy.sizeW
-    txHeight = setxy.sizeH
+  for chunk in tText.split('\n'):
+    #self.xSize = setxy.sizeW
+    txHeight = self.ySize
     for index, charFor in pairs(chunk):
-      xChar = x+(index*(int(txWidth+1)))*size
-      if xChar+(txWidth*size) > 0 and xChar < int(fraWidth) and y+(txHeight*size) > 0 and y < int(fraHeight):
-        self.drawChar(dcChar=charFor, x=xChar, y=y, color=color, txWidth=txWidth, txHeight=txHeight, size=size)
+      xChar = x+(index*(int(self.xSize+1)))*size
+      if xChar+(self.xSize*size) > 0 and xChar < int(fraWidth) and y+(txHeight*size) > 0 and y < int(fraHeight):
+        self.drawChar(dcChar=charFor, x=xChar, y=y, color=color, txHeight=txHeight, size=size)
     tY += txHeight*size
 
 # ---------- Da qui parte lc conversione della classepy BitMapFont ---------------
-proc loadChars(self: Framebuffer; charType="std"): tuple[sizeW, sizeH: int] =
-  let loadFont = initChar(charType)
-  self.fbFont = loadFont.byteChar
-  result = (loadFont.xSize, loadFont.ySize)
+proc loadChars*(self: Framebuffer; charType="std") = #:tuple[sizeW, sizeH: int] =
+  let loadFont = initChar(charType) #chiama il modulo dove è definito seix sizey e fonts
+  self.fbFont = loadFont.byteChar #carica  i font
+  self.xSize = loadFont.xSize
+  self.ySize = loadFont.ySize
+  #result = (loadFont.xSize, loadFont.ySize)
   
-proc drawChar(self: Framebuffer; dcChar: char; x, y, color, txWidth, txHeight: int; size=1) =
+proc drawChar(self: Framebuffer; dcChar: char; x, y, color, txHeight: int; size=1) =
   var
     dcIndexFont: uint8
     dcLine: byte
     prova = 0
-  for charX in 0..txWidth-1: #-1 qui ci va!!!
+  for charX in 0..self.xSize-1: #-1 qui ci va!!!
     dcIndexFont = uint8(ord(dcChar)-(32))
     dcLine = self.fbFont[dcIndexFont][prova] #(0xaa) #1010101 per test
     for charY in 0..txHeight-1: #qui -1 non so ma per ora lo metto
