@@ -1,9 +1,19 @@
+#[
+Driver for display type ssd1306 write in Nim.
+The MIT License (MIT)
+Copyright (c) 2022 Martin Andrea (Martinix75)
+testet with Nim 1.6.6
+
+author Andrea Martin (Martinix75)
+https://github.com/Martinix75/Raspberry_Pico/tree/main/Libs/ssd1306
+]#
+
 import picostdlib/[stdio, gpio, time, i2c]
 import frameBuffer
 export frameBuffer
 
 const 
-  ssd1306Ver* = "0.6.3"
+  ssd1306Ver* = "0.7.1"
   setContrast = 0x81
   setEntireOn = 0xA4
   setNormInv = 0xA6
@@ -55,6 +65,7 @@ proc newSsd1306I2C*(i2c: I2CInst; lcdAdd: uint8; width, height: int; externalVcc
   result.initDisplay()
 
 proc initDisplay(self: SSD1306I2C) =
+  self.loadChars()
   for cmd in [setDisp or 0x00, 
               setMemAddr, 
               0x00, 
@@ -138,29 +149,10 @@ when isMainModule:
   print("Partenza...")
   setupI2c(blokk=i2c1,psda=18.Gpio, pscl=19.Gpio, freq=100_000)
   let test = newSsd1306I2C(i2c=i2c1, lcdAdd=0x3C, width=128, height=64)
-  #test.powerOff()
   test.clear(0)
-  #test.line(x=uint(5), y=uint(5), height=uint(40), color= uint(1))
-  #test.hline(x=uint(0), y=uint(63), width=uint(120), color= uint(1))
   test.rect( x=5 ,y=5, width=123, height=62, color=1, fill=false)
-  #test.line(xZero=uint(3), yZero=uint(3), xOne=uint(128), yOne=uint(63), color= uint(1))
-  #test.circle(centerX=63, centerY=32, radius=20, color=1)
-  test.text("ABCDE", 25 ,15, 1)
-  test.text("ABCDEFG", 25 ,30 ,1, charType="test")
+  test.text("Driver for", 35 ,17, 1)
+  test.text("NIM", 55 ,30 ,1, charType="test")
+  test.text("Version:" & ssd1306Ver , 30 ,45 ,1, charType="test")
   test.show()
-  #test.invert(1)
-  test.show()
-  sleep(3000)
-  #test.clear(0)
-  #test.show()
-  #test.rect( x=uint(5) ,y=uint(5), width=uint8(80), height=uint(20), color=uint(1), fill=false)
-  #test.show()
-    #[test.fill(uint8(0))
-    test.powerOn()
-    test.invert(uint8(0))
-    #test.hLine(uint(0),uint(0),uint(90),some(uint8(1)))
-    test.show()
-    print("FINE")
-    sleep(2000)
-    test.powerOff() ]#
-  print("------ FINE!! -----")
+
