@@ -1,3 +1,14 @@
+#[
+Driver for display type 1604 (HD44780+connected via PCF8574 on I2C) write in Nim.
+This is a port of https://github.com/Seeed-Studio/Grove_LCD_RGB_Backlight
+The MIT License (MIT)
+Copyright (c) 2022 Martin Andrea (Martinix75)
+testet with Nim 1.6.6
+
+author Andrea Martin (Martinix75)
+https://github.com/Martinix75/Raspberry_Pico/tree/main/Libs/display1602
+]#
+
 from sequtils import toSeq
 from math import round
 import picostdlib/[stdio, gpio, i2c, time]
