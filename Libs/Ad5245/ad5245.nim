@@ -1,3 +1,13 @@
+#[
+Driver for digital potentiometer Ad5245 write in Nim.
+The MIT License (MIT)
+Copyright (c) 2022 Martin Andrea (Martinix75)
+testet with Nim 1.6.6
+
+author Andrea Martin (Martinix75)
+https://github.com/Martinix75/Raspberry_Pico/tree/main/Libs/Ad5245
+]#
+
 import picostdlib/[i2c]
 from math import round
 
