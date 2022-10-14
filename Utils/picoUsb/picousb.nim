@@ -1,6 +1,15 @@
+#[
+Utilityfor USB write in Nim.
+The MIT License (MIT)
+Copyright (c) 2022 Martin Andrea (Martinix75)
+testet with Nim 1.6.6
+author Andrea Martin (Martinix75)
+https://github.com/Martinix75/Raspberry_Pico/tree/main/Utils/picoUsb
+]#
+
 import picostdlib/[stdio]
-# update for picostdlib 0.2.7
-const picousbVer* = "0.2.0"
+from strutils import strip, parseFloat, parseInt
+const picousbVer* = "0.3.1"
 
 type
     PicoUsb*  = ref object 
@@ -29,9 +38,52 @@ proc setReady(self: PicoUsb) = #proc to check if there is anything in the usb bu
 proc isReady*(self: PicoUsb): bool = #procedure for checking the buffer status. 
     setReady(self) #calls the procedure to set the variable.
     return self.setBool #return the value.
-
+  ## Checking the buffer status (if there are characters).
+  ##
+  ## ==========
+  ## **Returns:** 
+  ## true = there are characters, false = there are no characters.
+    
 proc readLine*(self: PicoUsb, time: uint32 = 100): string = #proc for read the string in usb 
     readLineInternal(self, time) #read with the private function.
     result = self.stringX #returns the complete string .
     self.stringX = "" #reset variable stringX (= "" empty string).
     self.readCh = '\255' #reset buffer
+  ## Read the string in the usb buffer.
+  ##
+  ## **Parameters**
+  ## time = time expected before the timeout (milliseconds).
+  ## ==========
+  ## 
+  ## **Returns** 
+  ## string
+  
+proc strToInt*(usbString: string): int = #proc for the conversion from string to INT.
+  let stringClear: string  = usbString.strip(chars={'\r', '\n'}) #delete CF and CR
+  try:
+    result = parseInt(stringClear) #convert string to Int.
+  except ValueError:
+    print("ERROR!! not INT converted!") #if the conversion fail!
+  ## Convert string in to int.
+  ##
+  ## **Parameters**
+  ## usbString = string read in usb.
+  ## =========
+  ##
+  ## **Results:** 
+  ## int
+
+proc strToFloat*(usbString: string, nround=2): float = #proc for tthe conversion from string to INT.
+  let stringClear: string  = usbString.strip(chars={'\r', '\n'}) #delete CF and CR
+  try:
+    result = parseFloat(stringClear) #convert string to Float
+  except ValueError:
+    print("ERROR!! not FLOAT converted!")#if the conversion fail!
+  ## Convert string in to float.
+  ##
+  ## **Parameters**
+  ## usbString = string read in usb.
+  ## =========
+  ##
+  ## **Results:** 
+  ## float
