@@ -9,7 +9,7 @@ https://github.com/Martinix75/Raspberry_Pico/tree/main/Utils/picoUsb
 
 import picostdlib/[stdio]
 from strutils import strip, parseFloat, parseInt
-const picousbVer* = "0.3.1"
+const picousbVer* = "0.3.2"
 
 type
     PicoUsb*  = ref object 
@@ -44,7 +44,7 @@ proc isReady*(self: PicoUsb): bool = #procedure for checking the buffer status.
   ## **Returns:** 
   ## true = there are characters, false = there are no characters.
     
-proc readLine*(self: PicoUsb, time: uint32 = 100): string = #proc for read the string in usb 
+proc readLine*(self: PicoUsb; time: uint32 = 100): string = #proc for read the string in usb 
     readLineInternal(self, time) #read with the private function.
     result = self.stringX #returns the complete string .
     self.stringX = "" #reset variable stringX (= "" empty string).
@@ -58,7 +58,7 @@ proc readLine*(self: PicoUsb, time: uint32 = 100): string = #proc for read the s
   ## **Returns** 
   ## string
   
-proc strToInt*(usbString: string): int = #proc for the conversion from string to INT.
+proc ToInt*(self: PicoUsb; usbString: string): int = #proc for the conversion from string to INT.
   let stringClear: string  = usbString.strip(chars={'\r', '\n'}) #delete CF and CR
   try:
     result = parseInt(stringClear) #convert string to Int.
@@ -73,7 +73,7 @@ proc strToInt*(usbString: string): int = #proc for the conversion from string to
   ## **Results:** 
   ## int
 
-proc strToFloat*(usbString: string, nround=2): float = #proc for tthe conversion from string to INT.
+proc ToFloat*(self:PicoUsb; usbString: string; nround=2): float = #proc for tthe conversion from string to INT.
   let stringClear: string  = usbString.strip(chars={'\r', '\n'}) #delete CF and CR
   try:
     result = parseFloat(stringClear) #convert string to Float
