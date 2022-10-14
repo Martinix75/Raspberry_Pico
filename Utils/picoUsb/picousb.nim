@@ -58,7 +58,7 @@ proc readLine*(self: PicoUsb; time: uint32 = 100): string = #proc for read the s
   ## **Returns** 
   ## string
   
-proc ToInt*(self: PicoUsb; usbString: string): int = #proc for the conversion from string to INT.
+proc toInt*(self: PicoUsb; usbString: string): int = #proc for the conversion from string to INT.
   let stringClear: string  = usbString.strip(chars={'\r', '\n'}) #delete CF and CR
   try:
     result = parseInt(stringClear) #convert string to Int.
@@ -73,7 +73,7 @@ proc ToInt*(self: PicoUsb; usbString: string): int = #proc for the conversion fr
   ## **Results:** 
   ## int
 
-proc ToFloat*(self:PicoUsb; usbString: string; nround=2): float = #proc for tthe conversion from string to INT.
+proc toFloat*(self:PicoUsb; usbString: string; nround=2): float = #proc for tthe conversion from string to INT.
   let stringClear: string  = usbString.strip(chars={'\r', '\n'}) #delete CF and CR
   try:
     result = parseFloat(stringClear) #convert string to Float
