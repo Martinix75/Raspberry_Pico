@@ -4,14 +4,19 @@ from math import round, pow
 from sequtils import toSeq
 from strutils import Letters
 
-let randomGenVer* = "0.5.3"
+const randomGenVer* = "0.5.4"
 
 var timeSeed: uint32 = 27121975
 
 proc randomize*() = #Randomizes the variable with the bootstrap time 
+  ## Randomizes the variable with the bootstrap time.
   timeSeed = timeUs32()
 
 proc random*(precision = 10): float = #make a random float number between 0..1 (set precision)
+  ## Generates a random number between 0 and 1
+  ##
+  ## **Parameters:**
+  ## - precision = indicates how many numbers to use (10 = 0.1234567891)
   const 
     a: uint32 = 1664525
     c: uint32 = 1013904223
@@ -20,18 +25,22 @@ proc random*(precision = 10): float = #make a random float number between 0..1 (
   result = round(float(timeSeed) / float(m), precision)
 
 proc randomInt*(min = 0, max = 100.0): int = #make a random integer numer between "min" and "max"
+  ## Generates an entire random number, between a maximum and a minimum.
+  ##
+  ## **Parameters:**
+  ## - min = minimum integer of generated.
+  ## - max = maximum integer of generated.
   while true:
     var numbIntRnd = int32(random() * max)
     if numbIntRnd >= min:
       return numbIntRnd
 
 proc randomChar*(): char = #make a random char (a..z, A..Z)
+  ## Generates a random character (a..z, A..Z).
   let seqLetters = toSeq(Letters)
   let numbIntRnd = randomInt(0,51)
   result = seqLetters[numbIntRnd]
 
-#[ in ...csource/CMakeLists.txt add target_link_libraries(tests pico_stdlib hardware_adc) 
-add--> (hardware_timer) ]#
 
 #------------------------------------------------
 when isMainModule:
