@@ -9,12 +9,14 @@ author Andrea Martin (Martinix75)
 https://github.com/Martinix75/Raspberry_Pico/tree/main/Libs/ssd1306
 ]#
 
+## Module for writing on the buffer characters, geometric shapes and drawings.
+
 import picostdlib/[stdio, gpio, time, i2c] #solo in test
 import std/[options]
 from strutils import split
 import font5x8
 
-const frameBufferVer* = "0.7.3"
+const frameBufferVer* = "0.7.4"
 stdioInitAll()
 type 
   Framebuffer* = ref object of RootObj
@@ -41,7 +43,7 @@ proc line*(self: Framebuffer, xStr, yStr, xEnd, yEnd, color: int)
 proc pixel(self: Framebuffer; x, y: int; color=none(int)): Option[uint8]
 proc hline*(self: Framebuffer; x, y, width, color: int)
 proc vline*(self: Framebuffer; x, y, height, color: int)
-proc circle*(self: Framebuffer; centerX, centerY, radius, color: int)
+proc circle*(self: Framebuffer; xCenter, yCenter, radius, color: int)
 proc text*(self: Framebuffer; text: string; x, y, color: int; charType="std"; size=1, direct=true)
 # ---------- FINE Prototipi Procedure Pubbliche ----------
 
@@ -90,6 +92,17 @@ proc fillRect(self: Framebuffer; x, y, width, height, color: int) =
   self.rect(x=x, y=y, width=width, height=height, color=color, fill=true)
   
 proc rect*(self: Framebuffer; x ,y, width, height, color: int, fill=false) = #ok!
+  ## Draw a rectangle on the display with the coordinates indicated.
+  ##
+  runnableExamples:
+    rect()
+  ## **Parameters:**
+  ## - *x*: initial point on the axis of the X of the rectangle.
+  ## - *y*: initial point on the axis of the Y of the rectangle.
+  ## - *width:* length of the segment on the X axis.
+  ## - *height:* length of the segment on the Y axis.
+  ## - *color:* if color = 1 lights the pixels, if color = 0 turns off the pixels.
+  ## - *fill:* if *false* does not color the rectangle, if *true* it fills it
   var #!! dove ce x e y forse ma messo rX ed rY
     rX = x
     rY = y
@@ -143,12 +156,41 @@ proc pixel(self: Framebuffer; x, y: int; color=none(int)): Option[uint8] =
     result = none(uint8)
     
 proc hline*(self: Framebuffer; x, y, width, color: int) = #ok!
+  ## Trace a simple horizontal line.
+  ##
+  runnableExamples:
+    hline(x=5, y=35, width=18, color=1)
+  ## **Parameters:**
+  ## - *x:* initial point on the axis of the X of the line.
+  ## - *y:* initial point on the axis of the Y of the line.
+  ## - *width:* length of the segment on the X axis.
+  ## - *color:* if color = 1 lights the pixels, if color = 0 turns off the pixels.
   self.rect(x=x ,y=y, width=width, height=1, color=color, fill=true)
 
 proc vline*(self: Framebuffer; x, y, height, color: int) = #ok!
+  ## Trace a simple vertical line.
+  ##
+  runnableExamples:
+    vline(x=5, y=35, height=18, color=1)
+  ## **Parameters:**
+  ## - *x:* initial point on the axis of the X of the line.
+  ## - *y:* initial point on the axis of the Y of the line.
+  ## - *height:* length of the segment on the Y axis.
+  ## - *color:* if color = 1 lights the pixels, if color = 0 turns off the pixels.
   self.rect(x=x ,y=y, width=1, height=height, color=color, fill=true)
     
 proc line*(self: Framebuffer, xStr, yStr, xEnd, yEnd, color: int) = #ok!
+  ## Trace a line that can go in all directions
+  ##
+  runnableExamples:
+    line()
+  ## **Parameters:**
+  ## - *xStr:* initial point on the axis of the X of the line.
+  ## - *yStr:* initial point on the axis of the Y of the line.
+  ## - *xEnd:* final point on the axis of the X of the line.
+  ## - *yEnd:* final point on the axis of the Y of the line.
+  ## - *height:* length of the segment on the Y axis.
+  ## - *color:* if color = 1 lights the pixels, if color = 0 turns off the pixels.
   var
     lXzero = xStr
     lYzero = yStr
@@ -180,7 +222,16 @@ proc line*(self: Framebuffer, xStr, yStr, xEnd, yEnd, color: int) = #ok!
       lYzero += sY
   discard self.pixel(x=lXzero, y=lYzero,color=some(color))
   
-proc circle*(self: Framebuffer; centerX, centerY, radius, color: int) =
+proc circle*(self: Framebuffer; xCenter, yCenter, radius, color: int) =
+  ## Draw a circle in the coordinates indicated and with the indicated radius.
+  ##
+  runnableExamples:
+    circle(xCenter=110, yCenter=20, radius=12, color=1)
+  ## **Parameters:**
+  ## - *xCenter:* position of the Center on the Axis X.
+  ## - *yCenter:* position of the Center on the Axis Y.
+  ## - *radius:* defines the circle radius
+  ## - *color:* if color = 1 lights the pixels, if color = 0 turns off the pixels.
   var
     x = radius-1
     dX = 1
@@ -188,14 +239,14 @@ proc circle*(self: Framebuffer; centerX, centerY, radius, color: int) =
     y = 0
     err = dX-(radius shl 1)
   while x >= y:
-    discard self.pixel(centerX+x, centerY+y, color=some(color))
-    discard self.pixel(centerX+y, centerY+x, color=some(color))
-    discard self.pixel(centerX-y, centerY+x, color=some(color))
-    discard self.pixel(centerX-x, centerY+y, color=some(color))
-    discard self.pixel(centerX-x, centerY-y, color=some(color))
-    discard self.pixel(centerX-y, centerY-x, color=some(color))
-    discard self.pixel(centerX+y, centerY-x, color=some(color))
-    discard self.pixel(centerX+x, centerY-y, color=some(color))
+    discard self.pixel(xCenter+x, yCenter+y, color=some(color))
+    discard self.pixel(xCenter+y, yCenter+x, color=some(color))
+    discard self.pixel(xCenter-y, yCenter+x, color=some(color))
+    discard self.pixel(xCenter-x, yCenter+y, color=some(color))
+    discard self.pixel(xCenter-x, yCenter-y, color=some(color))
+    discard self.pixel(xCenter-y, yCenter-x, color=some(color))
+    discard self.pixel(xCenter+y, yCenter-x, color=some(color))
+    discard self.pixel(xCenter+x, yCenter-y, color=some(color))
     if err <= 0:
       y += 1
       err += dY
@@ -206,9 +257,26 @@ proc circle*(self: Framebuffer; centerX, centerY, radius, color: int) =
       err += dX-(radius shl 1)
       
 proc clear*(self: Framebuffer; color=0) =
+  ## Delete all drawings and characters on the display.
+  ##
+  runnableExamples:
+    clear()
+  ## **Parameters:**
   self.fillFb(color=color)
   
 proc text*(self: Framebuffer; text: string; x, y, color: int; charType="std"; size=1, direct=true) =
+  ## Print a string on the display in the indicated position.
+  ##
+  runnableExamples:
+    text(text="Hello", x=35, y=17, color=1)
+  ## **Parameters:**
+  ## - *text:* string to print on the display.
+  ## - *x:* initial point on the axis of the X of the text.
+  ## - *y:* initial point on the axis of the Y of the text.
+  ## - *color:* if color = 1 lights the pixels, if color = 0 turns off the pixels.
+  ## - *charType:* choose the type of character you want to use.
+  ## - *size:* choose the size with which to multiply the character (only integers).
+  ## - *direct:* for internal use of the library.
   let
 
     #self.fbRatioSize = 3#int(1.25*float(setxy.sizeW))
