@@ -8,12 +8,15 @@ author Andrea Martin (Martinix75)
 https://github.com/Martinix75/Raspberry_Pico/tree/main/Libs/ssd1306
 ]#
 
+## Driver for display type ssd1306 write in Nim.
+## This module offers you basic methods to simply manage the ssd1306 display
+
 import picostdlib/[stdio, gpio, time, i2c]
 import frameBuffer
 export frameBuffer
 
 const 
-  ssd1306Ver* = "0.7.1"
+  ssd1306Ver* = "0.7.2"
   setContrast = 0x81
   setEntireOn = 0xA4
   setNormInv = 0xA6
@@ -55,6 +58,15 @@ proc show*(self: SSD1306I2C)
 # ---------- FINE Prototipi Procedure Pubbliche -----------
 
 proc newSsd1306I2C*(i2c: I2CInst; lcdAdd: uint8; width, height: int; externalVcc=false): SSD1306I2C =
+  ## Display initiator
+  ##
+  runnableExamples:
+    newSsd1306I2C(i2c=i2c1, lcdAdd=0x3C, width=128, height=64)
+  ## **Parameters:**
+  ## - *i2c* = name of the block where the display connected (i2c0 or i2c1).
+  ## - *lcdAdd* = hardware address of the display.
+  ## - *width* = display width (see data scheet).
+  ## - *height* = display height (see data sheet).
   let pagesInit = height div 8
   let nBytes = pagesInit*width+1
   var bufInit = newSeqOfCap[uint8](nBytes) #usato uan sequanza fissa per calcolare la dimensione dell'array
@@ -110,13 +122,18 @@ proc writeData(self: SSD1306I2C) =
   writeBlocking(self.i2c, self.lcdAdd, addrElement2, csize_t(self.fbBuff.len()*sizeof(self.fbBuff[0])), true)
 
 proc powerOff*(self: SSD1306I2C) =
+  ## Turn off the display
+  ## da finire...
   #print("off " & $(setDisp or 0x00))
   self.writeCmd(uint8(setDisp or 0x00))
 
 proc powerOn*(self: SSD1306I2C) =
+  ## Turn on the display
+  ## da finire....
   self.writeCmd((setDisp or 0x01))
 
 proc contrast*(self: SSD1306I2C, contrast: uint8) =
+  ## DA VEDERE QUESTA:::
   self.writeCmd(setContrast)
   self.writeCmd(contrast)
 
@@ -124,6 +141,11 @@ proc invert*(self: SSD1306I2C, invert: uint8) =
   self.writeCmd(setNormInv or (invert and 1))
 
 proc show*(self: SSD1306I2C) =
+  ## shows what is written in memory by the procedures that trace 
+  ## forms or characters (otherwise they are not displayed).
+  ##
+  runnableExamples:
+    show()
   #print("chiamata a show.. " & '\n')
   var xZero: uint8 = 0
   var xOne: uint8 = uint8(self.fbWidth-1)
@@ -147,7 +169,7 @@ when isMainModule:
   stdioInitAll()
   sleep(2000)
   print("Partenza...")
-  setupI2c(blokk=i2c1,psda=18.Gpio, pscl=19.Gpio, freq=100_000)
+  setupI2c(blokk=i2c1,psda=2.Gpio, pscl=3.Gpio, freq=100_000)
   let test = newSsd1306I2C(i2c=i2c1, lcdAdd=0x3C, width=128, height=64)
   test.clear(0)
   test.rect( x=5 ,y=5, width=123, height=62, color=1, fill=false)
