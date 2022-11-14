@@ -71,7 +71,7 @@ proc setValue*(self: Ad5245, data: var uint8) = #set the value 0 = RESmin, 255 =
   runnableExamples:
     self.setValue(75)
   ## **Parameters:**
-  ## - *data* = set the numerical value that the potentiometer can take (it is not the Hominic value)
+  ## - *data* = set the numerical value that the potentiometer can take (it is not the Ohminic value)
   self.writeAd5245(data) #call proc for write in Ad5245
   
 proc setResWA*(self: Ad5245, ohmValue: var int) = #proc to set the value of the nominal resistance between B and W
