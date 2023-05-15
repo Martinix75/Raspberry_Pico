@@ -15,16 +15,20 @@ import picostdlib/[stdio, gpio, time, i2c] #solo in test
 import std/[options]
 from strutils import split
 import font5x8
+import images
 
-const frameBufferVer* = "0.7.4"
+const frameBufferVer* = "0.8.2" #immegine optional
 stdioInitAll()
 type 
   Framebuffer* = ref object of RootObj
     fbWidth*, fbHeight*, fbStride*: int #per ora metto tutti i membi acessibili(pubblici poi vediamo s eprivatizzare)
-    xSize*, ySize*: int
+    xSizeFont*, ySizeFont*: int
+    xSizeImg*, ySizeImg*: int #memorizza la grandezza dell'immagine.
     fbRotation*: uint8
     fbBuff*: seq[byte]
     fbFont*: array[0..95, array[0..4, byte]]
+    #fbImg*: array[0..15, uint] #vediamo se ba bene!!!! usare uint no byte senno niente numeri >255!!!
+    fbImg*: seq[uint] #vediamo se ba bene!!!! usare uint no byte senno niente numeri >255!!!
     #fbFontName: string
     
 # ---------- INIZIO Prototipi Procedure Private ----------
@@ -33,7 +37,9 @@ proc getPixelFb(self: Framebuffer; x, y: int): uint8
 proc fillRectD1(self: Framebuffer; x ,y ,width, height, color: int)
 proc fillRect(self: Framebuffer; x, y, width, height, color: int)
 proc loadChars*(self: Framebuffer; charType="std") #: tuple[sizeW, sizeH: int]
+proc loadImage*(self: Framebuffer; nameImg = "img1")
 proc drawChar(self: Framebuffer; dcChar: char; x, y, color, txHeight: int; size=1)
+proc drawImage(self: Framebuffer; xPos, yPos, color: int)
 proc fillFb(self: Framebuffer; color: int)
 # ---------- FINE Prototipi Procedure Private ------------
 # ---------- INIZIO Prototipi Procedure Pubbliche --------
@@ -264,7 +270,7 @@ proc clear*(self: Framebuffer; color=0) =
   ## **Parameters:**
   self.fillFb(color=color)
   
-proc text*(self: Framebuffer; text: string; x, y, color: int; charType="std"; size=1, direct=true) =
+proc text*(self: Framebuffer; text: string; x, y, color: int; charType="std"; size=1; direct=true) =
   ## Print a string on the display in the indicated position.
   ##
   runnableExamples:
@@ -281,12 +287,12 @@ proc text*(self: Framebuffer; text: string; x, y, color: int; charType="std"; si
 
     #self.fbRatioSize = 3#int(1.25*float(setxy.sizeW))
     dotCharMax = int(((self.fbWidth/8)+5)*5) #calcola i punti massimi utilizzabili dai caratteri (tile per lo schift x)
-    #ratioSize = int(1.25*float(self.xSize))
+    #ratioSize = int(1.25*float(self.xSizeFont))
   var
     fraWidth = self.fbWidth
     fraHeight = self.fbHeight
     xChar: int
-    #self.xSize, txHeight: int
+    #self.xSizeFont, txHeight: int
     txHeight: int
     tY = y
     tText = text
@@ -301,28 +307,39 @@ proc text*(self: Framebuffer; text: string; x, y, color: int; charType="std"; si
   if self.fbRotation in [uint8(1), uint8(3)] == true:
     fraWidth=fraHeight; fraHeight=fraWidth
   for chunk in tText.split('\n'):
-    #self.xSize = setxy.sizeW
-    txHeight = self.ySize
+    #self.xSizeFont = setxy.sizeW
+    txHeight = self.ySizeFont
     for index, charFor in pairs(chunk):
-      xChar = x+(index*(int(self.xSize+1)))*size
-      if xChar+(self.xSize*size) > 0 and xChar < int(fraWidth) and y+(txHeight*size) > 0 and y < int(fraHeight):
+      xChar = x+(index*(int(self.xSizeFont+1)))*size
+      if xChar+(self.xSizeFont*size) > 0 and xChar < int(fraWidth) and y+(txHeight*size) > 0 and y < int(fraHeight):
         self.drawChar(dcChar=charFor, x=xChar, y=y, color=color, txHeight=txHeight, size=size)
     tY += txHeight*size
+
+proc image*(self: Framebuffer; x, y, color: int; nameImg="img1"; direct=true) =
+  self.loadImage(nameImg=nameImg)
+  self.drawImage(xPos=x, yPos=y, color=color)
 
 # ---------- Da qui parte lc conversione della classepy BitMapFont ---------------
 proc loadChars*(self: Framebuffer; charType="std") = #:tuple[sizeW, sizeH: int] =
   let loadFont = initChar(charType) #chiama il modulo dove è definito seix sizey e fonts
   self.fbFont = loadFont.byteChar #carica  i font
-  self.xSize = loadFont.xSize
-  self.ySize = loadFont.ySize
-  #result = (loadFont.xSize, loadFont.ySize)
+  self.xSizeFont = loadFont.xSize
+  self.ySizeFont = loadFont.ySize
+  #result = (loadFont.xSizeFont, loadFont.ySizeFont)
+
+proc loadImage*(self: Framebuffer; nameImg="img1") = #carica immagine (Ver 0.8.0)
+#invenbtya qualcosa del tipo se immagine = a quella vecchia non ricaricare
+  let loadImage = initImg(nameImg = nameImg)
+  self.fbImg = loadImage.byteImg
+  self.xSizeImg = loadImage.xSizeImg
+  self.ySizeImg = loadImage.ySizeImg
   
 proc drawChar(self: Framebuffer; dcChar: char; x, y, color, txHeight: int; size=1) =
   var
     dcIndexFont: uint8
     dcLine: byte
     prova = 0
-  for charX in 0..self.xSize-1: #-1 qui ci va!!!
+  for charX in 0..self.xSizeFont-1: #-1 qui ci va!!!
     dcIndexFont = uint8(ord(dcChar)-(32))
     dcLine = self.fbFont[dcIndexFont][prova] #(0xaa) #1010101 per test
     for charY in 0..txHeight-1: #qui -1 non so ma per ora lo metto
@@ -332,3 +349,22 @@ proc drawChar(self: Framebuffer; dcChar: char; x, y, color, txHeight: int; size=
       prova = 0
     else:
       prova += 1
+
+proc drawImage(self: Framebuffer; xPos, yPos, color: int) = #traccia immagina a display (Ver 0.8.0).
+  var 
+    cont= 1
+    x=xPos
+    y=yPos
+  if x+self.xSizeImg > self.fbWidth or x < 1: #posiziona xmax correttamente indipendente da grandezza immagine.
+    x=1
+  if y+self.ySizeImg > self.fbHeight or y < 1: #posiziona ymax correttamente indipendente da grandezza immagine.
+    y=1
+  for colonneImg in 0..<self.ySizeImg: #ok valore corretto
+    for byteImg in 0..<self.xSizeImg: #ok valore corretto
+      #print($cont & ": " & "Immagine: " & $self.fbImg[byteImg])
+      cont.inc()
+      if ((self.fbImg[byteImg] shr colonneImg) and 0x01) == 1:
+        discard self.pixel(x=x+byteImg, y=y+colonneImg, color=some(color))
+        
+    
+      
