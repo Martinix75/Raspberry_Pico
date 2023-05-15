@@ -16,7 +16,7 @@ import frameBuffer
 export frameBuffer
 
 const 
-  ssd1306Ver* = "0.7.2"
+  ssd1306Ver* = "0.8.2"
   setContrast = 0x81
   setEntireOn = 0xA4
   setNormInv = 0xA6
@@ -166,15 +166,31 @@ proc show*(self: SSD1306I2C) =
 
 when isMainModule:
   import picostdlib/[stdio, gpio, time, i2c]
+  import random
   stdioInitAll()
   sleep(2000)
   print("Partenza...")
-  setupI2c(blokk=i2c1,psda=2.Gpio, pscl=3.Gpio, freq=100_000)
+  setupI2c(blokk=i2c1,psda=2.Gpio, pscl=3.Gpio, freq=400_000)
   let test = newSsd1306I2C(i2c=i2c1, lcdAdd=0x3C, width=128, height=64)
   test.clear(0)
-  test.rect( x=5 ,y=5, width=123, height=62, color=1, fill=false)
+  #test.rect( x=5 ,y=5, width=123, height=62, color=1, fill=false)
   test.text("Driver for", 35 ,17, 1)
   test.text("NIM", 55 ,30 ,1, charType="test")
   test.text("Version:" & ssd1306Ver , 30 ,45 ,1, charType="test")
   test.show()
+  sleep(2000)
+  test.clear(0)
+  randomize()
+  var index = 1
+  for _ in 1..500:
+    let l = randomInt(0,128) #valore ok = 94
+    let m = randomInt(0,64) #valore ok = 48
+    print($index & " Valorirnd: x= " & $l & "  Y= " & $m)
+    #test.screensaver()
+    test.image(x=l, y=m, color=1, nameImg="iom1")
+    test.show()
+    sleep(800)
+    test.clear(0)
+    test.show()
+    index.inc()
 
