@@ -14,7 +14,7 @@ import ssd1306
 #import picostdlib/[stdio, gpio, time, i2c] #x test
 #stdioInitAll() #per test
 const
-  utilSsd1306Ver* = "0.2.4"
+  utilSsd1306Ver* = "0.3.0"
   
 proc centerText*(self: SSD1306I2C; text: string; y: int; color=1, charType="std") =
   let
@@ -69,3 +69,6 @@ proc shiftCenterText*(self: SSD1306I2C; text: string; y: int; speed=2; charType=
     self.text(text, i, y, 0, charType=charType, direct=false)
   self.text(text, setX, y, 1, charType=charType, direct=false)
 
+proc screenSaver*(self: SSD1306I2C) =
+  echo("scrensaver")
+  self.image(x=3, y=3, color=1, nameImg="iom1")
