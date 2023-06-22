@@ -17,7 +17,7 @@ from strutils import split
 import font5x8
 import images
 
-const frameBufferVer* = "0.8.2" #immegine optional
+const frameBufferVer* = "0.9.0" #cambio nomi per compatttibilità
 stdioInitAll()
 type 
   Framebuffer* = ref object of RootObj
@@ -36,22 +36,23 @@ proc setPixelFb(self: Framebuffer; x, y, color: int)
 proc getPixelFb(self: Framebuffer; x, y: int): uint8
 proc fillRectD1(self: Framebuffer; x ,y ,width, height, color: int)
 proc fillRect(self: Framebuffer; x, y, width, height, color: int)
-proc loadChars*(self: Framebuffer; charType="std") #: tuple[sizeW, sizeH: int]
-proc loadImage*(self: Framebuffer; nameImg = "img1")
+proc pixel(self: Framebuffer; x, y: int; color=none(int)): Option[uint8]
 proc drawChar(self: Framebuffer; dcChar: char; x, y, color, txHeight: int; size=1)
 proc drawImage(self: Framebuffer; xPos, yPos, color: int)
 proc fillFb(self: Framebuffer; color: int)
 # ---------- FINE Prototipi Procedure Private ------------
 # ---------- INIZIO Prototipi Procedure Pubbliche --------
-proc clear*(self: Framebuffer; color=0)
-proc rect*(self: Framebuffer; x ,y, width, height, color: int, fill=false)
-proc line*(self: Framebuffer, xStr, yStr, xEnd, yEnd, color: int)
-proc pixel(self: Framebuffer; x, y: int; color=none(int)): Option[uint8]
-proc hline*(self: Framebuffer; x, y, width, color: int)
-proc vline*(self: Framebuffer; x, y, height, color: int)
-proc circle*(self: Framebuffer; xCenter, yCenter, radius, color: int)
-proc text*(self: Framebuffer; text: string; x, y, color: int; charType="std"; size=1, direct=true)
-# ---------- FINE Prototipi Procedure Pubbliche ----------
+proc clearFb*(self: Framebuffer; color=0)
+proc rectFb*(self: Framebuffer; x ,y, width, height, color: int, fill=false)
+proc lineFb*(self: Framebuffer, xStr, yStr, xEnd, yEnd, color: int)
+proc hlineFb*(self: Framebuffer; x, y, width, color: int)
+proc vlineFb*(self: Framebuffer; x, y, height, color: int)
+proc circleFb*(self: Framebuffer; xCenter, yCenter, radius, color: int)
+proc textFb*(self: Framebuffer; text: string; x, y, color: int; charType="std"; size=1, direct=true)
+proc loadCharsFb*(self: Framebuffer; charType="std") #: tuple[sizeW, sizeH: int]
+proc loadImageFb*(self: Framebuffer; nameImg = "img1")
+proc imageFb*(self: Framebuffer; x, y, color: int; nameImg="img1"; direct=true)
+# ---------- FINE Prototipi Procedure Pubbliche --------
 
 proc setPixelFb(self: Framebuffer; x, y, color: int) = #ok!
   let index = (y shr 3)*self.fbStride+x
@@ -95,9 +96,9 @@ proc fillRectD1(self: Framebuffer; x ,y ,width, height, color: int) = #ok!
     frHeight -= 1
 
 proc fillRect(self: Framebuffer; x, y, width, height, color: int) =
-  self.rect(x=x, y=y, width=width, height=height, color=color, fill=true)
+  self.rectFb(x=x, y=y, width=width, height=height, color=color, fill=true)
   
-proc rect*(self: Framebuffer; x ,y, width, height, color: int, fill=false) = #ok!
+proc rectFb*(self: Framebuffer; x ,y, width, height, color: int, fill=false) = #ok!
   ## Draw a rectangle on the display with the coordinates indicated.
   ##
   runnableExamples:
@@ -161,7 +162,7 @@ proc pixel(self: Framebuffer; x, y: int; color=none(int)): Option[uint8] =
     self.setPixelFb(x=pX, y=pY, color=color.get())
     result = none(uint8)
     
-proc hline*(self: Framebuffer; x, y, width, color: int) = #ok!
+proc hlineFb*(self: Framebuffer; x, y, width, color: int) = #ok!
   ## Trace a simple horizontal line.
   ##
   runnableExamples:
@@ -171,9 +172,9 @@ proc hline*(self: Framebuffer; x, y, width, color: int) = #ok!
   ## - *y:* initial point on the axis of the Y of the line.
   ## - *width:* length of the segment on the X axis.
   ## - *color:* if color = 1 lights the pixels, if color = 0 turns off the pixels.
-  self.rect(x=x ,y=y, width=width, height=1, color=color, fill=true)
+  self.rectFb(x=x ,y=y, width=width, height=1, color=color, fill=true)
 
-proc vline*(self: Framebuffer; x, y, height, color: int) = #ok!
+proc vlineFb*(self: Framebuffer; x, y, height, color: int) = #ok!
   ## Trace a simple vertical line.
   ##
   runnableExamples:
@@ -183,9 +184,9 @@ proc vline*(self: Framebuffer; x, y, height, color: int) = #ok!
   ## - *y:* initial point on the axis of the Y of the line.
   ## - *height:* length of the segment on the Y axis.
   ## - *color:* if color = 1 lights the pixels, if color = 0 turns off the pixels.
-  self.rect(x=x ,y=y, width=1, height=height, color=color, fill=true)
+  self.rectFb(x=x ,y=y, width=1, height=height, color=color, fill=true)
     
-proc line*(self: Framebuffer, xStr, yStr, xEnd, yEnd, color: int) = #ok!
+proc lineFb*(self: Framebuffer, xStr, yStr, xEnd, yEnd, color: int) = #ok!
   ## Trace a line that can go in all directions
   ##
   runnableExamples:
@@ -228,7 +229,7 @@ proc line*(self: Framebuffer, xStr, yStr, xEnd, yEnd, color: int) = #ok!
       lYzero += sY
   discard self.pixel(x=lXzero, y=lYzero,color=some(color))
   
-proc circle*(self: Framebuffer; xCenter, yCenter, radius, color: int) =
+proc circleFb*(self: Framebuffer; xCenter, yCenter, radius, color: int) =
   ## Draw a circle in the coordinates indicated and with the indicated radius.
   ##
   runnableExamples:
@@ -262,7 +263,7 @@ proc circle*(self: Framebuffer; xCenter, yCenter, radius, color: int) =
       dX += 2
       err += dX-(radius shl 1)
       
-proc clear*(self: Framebuffer; color=0) =
+proc clearFb*(self: Framebuffer; color=0) =
   ## Delete all drawings and characters on the display.
   ##
   runnableExamples:
@@ -270,7 +271,7 @@ proc clear*(self: Framebuffer; color=0) =
   ## **Parameters:**
   self.fillFb(color=color)
   
-proc text*(self: Framebuffer; text: string; x, y, color: int; charType="std"; size=1; direct=true) =
+proc textFb*(self: Framebuffer; text: string; x, y, color: int; charType="std"; size=1; direct=true) =
   ## Print a string on the display in the indicated position.
   ##
   runnableExamples:
@@ -297,7 +298,7 @@ proc text*(self: Framebuffer; text: string; x, y, color: int; charType="std"; si
     tY = y
     tText = text
   if direct == true:
-    self.loadChars(charType)# deve tirare su (aggiornare) i font ogni volta che si invoca test
+    self.loadCharsFb(charType)# deve tirare su (aggiornare) i font ogni volta che si invoca test
   while (len(tText)*5)+int(float(x)*0.9) >= dotCharMax+1: #(1/ratioSize)) >= dotCharMax+1: #x deve valere x*0.8 altrimenti calcola sballato
     #print(tText)
     tText = tText[0..^2]
@@ -315,19 +316,19 @@ proc text*(self: Framebuffer; text: string; x, y, color: int; charType="std"; si
         self.drawChar(dcChar=charFor, x=xChar, y=y, color=color, txHeight=txHeight, size=size)
     tY += txHeight*size
 
-proc image*(self: Framebuffer; x, y, color: int; nameImg="img1"; direct=true) =
-  self.loadImage(nameImg=nameImg)
+proc imageFb*(self: Framebuffer; x, y, color: int; nameImg="img1"; direct=true) =
+  self.loadImageFb(nameImg=nameImg)
   self.drawImage(xPos=x, yPos=y, color=color)
 
 # ---------- Da qui parte lc conversione della classepy BitMapFont ---------------
-proc loadChars*(self: Framebuffer; charType="std") = #:tuple[sizeW, sizeH: int] =
+proc loadCharsFb*(self: Framebuffer; charType="std") = #:tuple[sizeW, sizeH: int] =
   let loadFont = initChar(charType) #chiama il modulo dove è definito seix sizey e fonts
   self.fbFont = loadFont.byteChar #carica  i font
   self.xSizeFont = loadFont.xSize
   self.ySizeFont = loadFont.ySize
   #result = (loadFont.xSizeFont, loadFont.ySizeFont)
 
-proc loadImage*(self: Framebuffer; nameImg="img1") = #carica immagine (Ver 0.8.0)
+proc loadImageFb*(self: Framebuffer; nameImg="img1") = #carica immagine (Ver 0.8.0)
 #invenbtya qualcosa del tipo se immagine = a quella vecchia non ricaricare
   let loadImage = initImg(nameImg = nameImg)
   self.fbImg = loadImage.byteImg
